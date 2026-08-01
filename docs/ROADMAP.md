@@ -30,8 +30,9 @@
 - [x] Snapshot/outcome kalibrasyon veri adaptörü
 - [x] Sürümlü model registry
 - [x] Aktif model ağırlıklarını S runtime seçimine bağlama
+- [x] Erken/orta seans ve kapanış snapshot zamanlayıcı altyapısı
+- [x] Güvenli denetim ve bakım komutları
 - [ ] S performans rapor sayfası
-- [ ] Zamanlayıcılar ve bakım komutları
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -44,7 +45,8 @@
 - [x] Veri kalite dışlamalarını açık neden koduna bağla.
 - [x] S snapshot'ında giriş fiyatını sabitle.
 - [x] Snapshot'a kullanılan SAME_DAY/NEXT_DAY registry sürüm ve hash bilgisini yaz.
-- [ ] Aynı gün erken seans snapshot zamanlarını sabitle.
+- [x] Aynı işlem günü/session/horizon için mükerrer başarılı snapshot'ı engelle.
+- [x] Erken seans snapshot oturumlarını adlandır ve zamanlayıcı tanımlarını sabitle.
 - [ ] Resmi BIST işlem günü/tatil takvimini otomatik kaynağa bağla.
 
 Her S üretiminde değişmez kayıt:
@@ -79,6 +81,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Model, hisse ve seans bazında örneklem sayısı
 - [x] Top 20'ye ilk giriş anı ve o ana kadarki getiri
 - [x] Kronolojik train/test fold raporları
+- [x] Scheduler çalışma durumu, mükerrer atlama ve hata run-log kaydı
 
 ## Faz 5 — Formül iyileştirme
 
