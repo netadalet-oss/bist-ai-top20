@@ -26,6 +26,7 @@
 - [x] K_Tarihsel hedef etiketleme çekirdeği
 - [x] K_Tarihsel ölçüm ve raporlama
 - [x] S aday seçimi ve snapshot entegrasyonu
+- [x] Walk-forward kalibrasyon çekirdeği
 - [ ] S performans rapor sayfası
 - [ ] Zamanlayıcılar ve bakım komutları
 
@@ -70,6 +71,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Veri kapsamı ve eksik veri ayrımı
 - [x] Model, hisse ve seans bazında örneklem sayısı
 - [x] Top 20'ye ilk giriş anı ve o ana kadarki getiri
+- [x] Kronolojik train/test fold raporları
 
 ## Faz 5 — Formül iyileştirme
 
@@ -78,8 +80,10 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] K5'i gerçek model kapsamı ve sıralama tutarlılığına bağla.
 - [x] S'de sabit koltuk dağıtımını kaldır.
 - [x] Aynı gün ve ertesi gün S skorlarını ayır.
-- [ ] Uzman modelleri aynı gün ve ertesi gün hedefleri için ayrı kalibre et.
-- [ ] Skorları gerçek hedef verisiyle ortak ölçeğe kalibre et.
+- [x] Aynı gün ve ertesi gün için veri sızıntısız ağırlık arama altyapısı kur.
+- [ ] Gerçek snapshot birikimiyle uzman modelleri ayrı hedefler için kalibre et.
+- [ ] Kalibre edilmiş ağırlıkları sürümlü model kaydı olarak yayımla.
+- [ ] İşlem maliyeti, likidite ve kayma etkisini amaç fonksiyonuna ekle.
 
 ## Faz 6 — Uygulama katmanı
 
