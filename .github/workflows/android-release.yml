@@ -1,0 +1,237 @@
+name: Aurum Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, r40-release-candidate]
+    paths:
+      - 'r40-source-min.zip'
+      - '.github/workflows/android-release.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Expand R40 source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f r40-source-min.zip
+          rm -rf r40-src
+          unzip -q r40-source-min.zip -d r40-src
+          test -f r40-src/build.gradle.kts
+          test -f r40-src/settings.gradle.kts
+          echo "PROJECT_DIR=$GITHUB_WORKSPACE/r40-src" >> "$GITHUB_ENV"
+
+      - name: Apply verified source-tree corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str, label: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'{label} marker not found in {path}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          catalog = Path('r40-src/gradle/libs.versions.toml')
+          text = catalog.read_text(encoding='utf-8')
+          marker = 'kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }\n'
+          addition = 'kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }\n'
+          if addition not in text:
+              if marker not in text:
+                  raise SystemExit('kotlin-android plugin marker not found')
+              catalog.write_text(text.replace(marker, marker + addition, 1), encoding='utf-8')
+
+          root_build = Path('r40-src/build.gradle.kts')
+          root_text = root_build.read_text(encoding='utf-8')
+          ksp_marker = '    alias(libs.plugins.ksp) apply false\n'
+          jvm_line = '    alias(libs.plugins.kotlin.jvm) apply false\n'
+          if jvm_line not in root_text:
+              if ksp_marker not in root_text:
+                  raise SystemExit('root plugin marker not found')
+              root_build.write_text(root_text.replace(ksp_marker, ksp_marker + jvm_line, 1), encoding='utf-8')
+
+          Path('r40-src/core-model/build.gradle.kts').write_text(
+              'plugins { alias(libs.plugins.kotlin.jvm) }\n\n'
+              'kotlin { jvmToolchain(17) }\n\n'
+              'dependencies { testImplementation(libs.junit) }\n',
+              encoding='utf-8'
+          )
+
+          for relative in (
+              'r40-src/data-warehouse/build.gradle.kts',
+              'r40-src/domain-kmodels/build.gradle.kts',
+          ):
+              path = Path(relative)
+              body = path.read_text(encoding='utf-8')
+              body = body.replace('plugins { kotlin("jvm") }',
+                                  'plugins { alias(libs.plugins.kotlin.jvm) }')
+              path.write_text(body, encoding='utf-8')
+
+          job_persistence = Path(
+              'r40-src/core-database/src/main/java/com/aurum/bisttop20/data/db/JobExecutionPersistence.kt'
+          )
+          replace_once(
+              job_persistence,
+              '        val target = decision.targetStatus\n',
+              '        val target = requireNotNull(decision.targetStatus) { decision.reason }\n',
+              'nullable target status'
+          )
+
+          main_activity = Path(
+              'r40-src/app/src/main/java/com/aurum/bisttop20/MainActivity.kt'
+          )
+          main_text = main_activity.read_text(encoding='utf-8')
+          start = main_text.index('    private fun commandSelectedJob(command: String)')
+          next_fun = main_text.find('\n    private fun ', start + 1)
+          end = len(main_text) if next_fun == -1 else next_fun
+          function = main_text[start:end]
+          if '            }.show()\n' not in function:
+              raise SystemExit('commandSelectedJob dialog marker not found')
+          function = function.replace('            }.show()\n', '            }.show()\n        Unit\n', 1)
+          main_activity.write_text(main_text[:start] + function + main_text[end:], encoding='utf-8')
+
+          coordinator = Path(
+              'r40-src/app/src/main/java/com/aurum/bisttop20/jobs/JobCommandCoordinator.kt'
+          )
+          coordinator_text = coordinator.read_text(encoding='utf-8')
+          wildcard = 'import com.aurum.bisttop20.domain.jobs.*\n'
+          explicit = (
+              'import com.aurum.bisttop20.domain.jobs.JobCommand as DomainJobCommand\n'
+              'import com.aurum.bisttop20.domain.jobs.JobSnapshot\n'
+          )
+          if wildcard not in coordinator_text:
+              raise SystemExit('JobCommandCoordinator wildcard import not found')
+          coordinator_text = coordinator_text.replace(wildcard, explicit, 1)
+          coordinator_text = coordinator_text.replace('JobCommand.', 'DomainJobCommand.')
+          coordinator.write_text(coordinator_text, encoding='utf-8')
+
+          worker = Path(
+              'r40-src/app/src/main/java/com/aurum/bisttop20/jobs/TrackedDatabaseWorker.kt'
+          )
+          worker_text = worker.read_text(encoding='utf-8')
+          worker_imports = (
+              'import com.aurum.bisttop20.domain.jobs.JobModule\n'
+              'import com.aurum.bisttop20.domain.jobs.JobSnapshot\n'
+              'import com.aurum.bisttop20.domain.jobs.JobStatePolicy\n'
+              'import com.aurum.bisttop20.domain.jobs.JobStatus as DomainJobStatus\n'
+          )
+          if wildcard not in worker_text:
+              raise SystemExit('TrackedDatabaseWorker wildcard import not found')
+          worker_text = worker_text.replace(wildcard, worker_imports, 1)
+          worker_text = worker_text.replace('JobStatus.', 'DomainJobStatus.')
+          worker.write_text(worker_text, encoding='utf-8')
+          PY
+
+          grep -n "DomainJobCommand" r40-src/app/src/main/java/com/aurum/bisttop20/jobs/JobCommandCoordinator.kt
+          grep -n "DomainJobStatus" r40-src/app/src/main/java/com/aurum/bisttop20/jobs/TrackedDatabaseWorker.kt
+          sed -n '100,112p' r40-src/app/src/main/java/com/aurum/bisttop20/MainActivity.kt
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Print Gradle diagnostics
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          gradle --version
+          gradle --no-daemon --stacktrace projects
+          gradle --no-daemon --stacktrace :app:dependencies --configuration debugRuntimeClasspath
+
+      - name: Build debug APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle --no-daemon --stacktrace clean assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurum-debug-apk
+          path: r40-src/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Run unit tests
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle --no-daemon --stacktrace test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurum-test-reports
+          path: |
+            r40-src/**/build/reports/tests/**
+            r40-src/**/build/test-results/**
+          if-no-files-found: warn
+
+      - name: Detect signing secrets
+        id: signing
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          AURUM_STORE_PASSWORD: ${{ secrets.AURUM_STORE_PASSWORD }}
+          AURUM_KEY_ALIAS: ${{ secrets.AURUM_KEY_ALIAS }}
+          AURUM_KEY_PASSWORD: ${{ secrets.AURUM_KEY_PASSWORD }}
+        run: |
+          if [[ -n "$RELEASE_KEYSTORE_B64" && -n "$AURUM_STORE_PASSWORD" && -n "$AURUM_KEY_ALIAS" && -n "$AURUM_KEY_PASSWORD" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore release keystore
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+        run: |
+          mkdir -p r40-src/release-input
+          echo "$RELEASE_KEYSTORE_B64" | base64 --decode > r40-src/release-input/aurum-release.jks
+
+      - name: Build signed release APK and AAB
+        if: steps.signing.outputs.enabled == 'true'
+        working-directory: ${{ env.PROJECT_DIR }}
+        env:
+          AURUM_STORE_FILE: ${{ env.PROJECT_DIR }}/release-input/aurum-release.jks
+          AURUM_STORE_PASSWORD: ${{ secrets.AURUM_STORE_PASSWORD }}
+          AURUM_KEY_ALIAS: ${{ secrets.AURUM_KEY_ALIAS }}
+          AURUM_KEY_PASSWORD: ${{ secrets.AURUM_KEY_PASSWORD }}
+        run: gradle --no-daemon --stacktrace assembleRelease bundleRelease
+
+      - name: Verify signed release
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          APK=$(find r40-src/app/build/outputs/apk/release -name '*.apk' | head -1)
+          test -n "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee APK_SIGNATURE_REPORT.txt
+          sha256sum "$APK" r40-src/app/build/outputs/bundle/release/*.aab | tee RELEASE_SHA256.txt
+
+      - name: Upload release artifacts
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurum-signed-release
+          path: |
+            r40-src/app/build/outputs/apk/release/*.apk
+            r40-src/app/build/outputs/bundle/release/*.aab
+            APK_SIGNATURE_REPORT.txt
+            RELEASE_SHA256.txt
+          if-no-files-found: error
