@@ -21,9 +21,46 @@ jobs:
       - name: Expand R40 source archive
         shell: bash
         run: |
+          set -euo pipefail
           test -f r40-source-min.zip
+          rm -rf r40-src
           unzip -q r40-source-min.zip -d r40-src
+          test -f r40-src/build.gradle.kts
+          test -f r40-src/settings.gradle.kts
           echo "PROJECT_DIR=$GITHUB_WORKSPACE/r40-src" >> "$GITHUB_ENV"
+
+      - name: Apply CI source corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          catalog = Path('r40-src/gradle/libs.versions.toml')
+          text = catalog.read_text(encoding='utf-8')
+          marker = 'kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }\n'
+          addition = 'kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }\n'
+          if addition not in text:
+              if marker not in text:
+                  raise SystemExit('kotlin-android plugin marker not found')
+              text = text.replace(marker, marker + addition)
+              catalog.write_text(text, encoding='utf-8')
+
+          for relative in (
+              'r40-src/data-warehouse/build.gradle.kts',
+              'r40-src/domain-kmodels/build.gradle.kts',
+          ):
+              path = Path(relative)
+              body = path.read_text(encoding='utf-8')
+              body = body.replace('plugins { alias(libs.plugins.kotlin.jvm) }',
+                                  'plugins { alias(libs.plugins.kotlin.jvm) }')
+              body = body.replace('plugins { kotlin("jvm") }',
+                                  'plugins { alias(libs.plugins.kotlin.jvm) }')
+              path.write_text(body, encoding='utf-8')
+          PY
+          grep -n "kotlin-jvm" r40-src/gradle/libs.versions.toml
+          head -5 r40-src/data-warehouse/build.gradle.kts
+          head -5 r40-src/domain-kmodels/build.gradle.kts
 
       - uses: actions/setup-java@v4
         with:
@@ -39,9 +76,15 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Print Gradle diagnostics
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          gradle --version
+          gradle --no-daemon projects
+
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle --no-daemon clean test assembleDebug
+        run: gradle --no-daemon --stacktrace clean test assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -81,7 +124,7 @@ jobs:
           AURUM_STORE_PASSWORD: ${{ secrets.AURUM_STORE_PASSWORD }}
           AURUM_KEY_ALIAS: ${{ secrets.AURUM_KEY_ALIAS }}
           AURUM_KEY_PASSWORD: ${{ secrets.AURUM_KEY_PASSWORD }}
-        run: gradle --no-daemon assembleRelease bundleRelease
+        run: gradle --no-daemon --stacktrace assembleRelease bundleRelease
 
       - name: Verify signed release
         if: steps.signing.outputs.enabled == 'true'
