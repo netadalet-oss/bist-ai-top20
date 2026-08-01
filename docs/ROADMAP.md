@@ -37,6 +37,7 @@
 - [x] Uçtan uca gölge liste karşılaştırma altyapısı
 - [x] Gölge kollar için ayrı giriş fiyatı ve ortak outcome deneyi
 - [x] Gölge kollar için ham barlardan ayrı MFE/MAE hesaplama
+- [x] Merkezi BIST işlem günü ve yarım gün takvim sözleşmesi
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -52,7 +53,8 @@
 - [x] Aynı işlem günü/session/horizon için mükerrer başarılı snapshot'ı engelle.
 - [x] Erken seans snapshot oturumlarını adlandır ve zamanlayıcı tanımlarını sabitle.
 - [x] Legacy ve yeni gölge kolların giriş fiyatlarını ayrı sabitle.
-- [ ] Resmi BIST işlem günü/tatil takvimini otomatik kaynağa bağla.
+- [x] Resmi BIST işlem günü/tatil takvimini merkezi sağlayıcıya bağla.
+- [ ] Resmi sayfa yenileme ayrıştırıcısını hedef Apps Script ortamında doğrula ve izle.
 
 Her S üretiminde değişmez kayıt:
 
