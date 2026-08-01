@@ -25,7 +25,8 @@
 - [x] Değişmez K/S snapshot deposu
 - [x] K_Tarihsel hedef etiketleme çekirdeği
 - [x] K_Tarihsel ölçüm ve raporlama
-- [ ] S aday seçimi ve performans izleme
+- [x] S aday seçimi ve snapshot entegrasyonu
+- [ ] S performans rapor sayfası
 - [ ] Zamanlayıcılar ve bakım komutları
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
@@ -37,6 +38,7 @@
 - [x] Gün sonu ve ertesi işlem günü outcome üreticisini ekle.
 - [x] Reel Top 20 tanımından sabit `%15` filtresini kaldır.
 - [x] Veri kalite dışlamalarını açık neden koduna bağla.
+- [x] S snapshot'ında giriş fiyatını sabitle.
 - [ ] Aynı gün erken seans snapshot zamanlarını sabitle.
 - [ ] Resmi BIST işlem günü/tatil takvimini otomatik kaynağa bağla.
 
@@ -74,9 +76,10 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Eksik veride ağırlıkları mevcut bileşenlere göre yeniden normalize et.
 - [x] K3 pencere seçimini hisse bazında yap.
 - [x] K5'i gerçek model kapsamı ve sıralama tutarlılığına bağla.
+- [x] S'de sabit koltuk dağıtımını kaldır.
+- [x] Aynı gün ve ertesi gün S skorlarını ayır.
+- [ ] Uzman modelleri aynı gün ve ertesi gün hedefleri için ayrı kalibre et.
 - [ ] Skorları gerçek hedef verisiyle ortak ölçeğe kalibre et.
-- [ ] S'de sabit koltuk dağıtımını kaldır.
-- [ ] Aynı gün ve ertesi gün modellerini ayır.
 
 ## Faz 6 — Uygulama katmanı
 
