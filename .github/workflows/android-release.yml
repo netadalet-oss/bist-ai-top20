@@ -29,12 +29,18 @@ jobs:
           test -f r40-src/settings.gradle.kts
           echo "PROJECT_DIR=$GITHUB_WORKSPACE/r40-src" >> "$GITHUB_ENV"
 
-      - name: Apply CI source corrections
+      - name: Apply verified source-tree corrections
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str, label: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'{label} marker not found in {path}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
 
           catalog = Path('r40-src/gradle/libs.versions.toml')
           text = catalog.read_text(encoding='utf-8')
@@ -43,8 +49,7 @@ jobs:
           if addition not in text:
               if marker not in text:
                   raise SystemExit('kotlin-android plugin marker not found')
-              text = text.replace(marker, marker + addition)
-              catalog.write_text(text, encoding='utf-8')
+              catalog.write_text(text.replace(marker, marker + addition, 1), encoding='utf-8')
 
           root_build = Path('r40-src/build.gradle.kts')
           root_text = root_build.read_text(encoding='utf-8')
@@ -53,13 +58,12 @@ jobs:
           if jvm_line not in root_text:
               if ksp_marker not in root_text:
                   raise SystemExit('root plugin marker not found')
-              root_text = root_text.replace(ksp_marker, ksp_marker + jvm_line)
-              root_build.write_text(root_text, encoding='utf-8')
+              root_build.write_text(root_text.replace(ksp_marker, ksp_marker + jvm_line, 1), encoding='utf-8')
 
           Path('r40-src/core-model/build.gradle.kts').write_text(
-              '''plugins { alias(libs.plugins.kotlin.jvm) }\n\n'''
-              '''kotlin { jvmToolchain(17) }\n\n'''
-              '''dependencies { testImplementation(libs.junit) }\n''',
+              'plugins { alias(libs.plugins.kotlin.jvm) }\n\n'
+              'kotlin { jvmToolchain(17) }\n\n'
+              'dependencies { testImplementation(libs.junit) }\n',
               encoding='utf-8'
           )
 
@@ -76,15 +80,61 @@ jobs:
           job_persistence = Path(
               'r40-src/core-database/src/main/java/com/aurum/bisttop20/data/db/JobExecutionPersistence.kt'
           )
-          job_text = job_persistence.read_text(encoding='utf-8')
-          nullable_line = '        val target = decision.targetStatus\n'
-          safe_line = '        val target = requireNotNull(decision.targetStatus) { decision.reason }\n'
-          if nullable_line in job_text:
-              job_text = job_text.replace(nullable_line, safe_line, 1)
-              job_persistence.write_text(job_text, encoding='utf-8')
-          elif safe_line not in job_text:
-              raise SystemExit('JobExecutionPersistence target status marker not found')
+          replace_once(
+              job_persistence,
+              '        val target = decision.targetStatus\n',
+              '        val target = requireNotNull(decision.targetStatus) { decision.reason }\n',
+              'nullable target status'
+          )
+
+          main_activity = Path(
+              'r40-src/app/src/main/java/com/aurum/bisttop20/MainActivity.kt'
+          )
+          main_text = main_activity.read_text(encoding='utf-8')
+          start = main_text.index('    private fun commandSelectedJob(command: String)')
+          next_fun = main_text.find('\n    private fun ', start + 1)
+          end = len(main_text) if next_fun == -1 else next_fun
+          function = main_text[start:end]
+          if '            }.show()\n' not in function:
+              raise SystemExit('commandSelectedJob dialog marker not found')
+          function = function.replace('            }.show()\n', '            }.show()\n        Unit\n', 1)
+          main_activity.write_text(main_text[:start] + function + main_text[end:], encoding='utf-8')
+
+          coordinator = Path(
+              'r40-src/app/src/main/java/com/aurum/bisttop20/jobs/JobCommandCoordinator.kt'
+          )
+          coordinator_text = coordinator.read_text(encoding='utf-8')
+          wildcard = 'import com.aurum.bisttop20.domain.jobs.*\n'
+          explicit = (
+              'import com.aurum.bisttop20.domain.jobs.JobCommand as DomainJobCommand\n'
+              'import com.aurum.bisttop20.domain.jobs.JobSnapshot\n'
+          )
+          if wildcard not in coordinator_text:
+              raise SystemExit('JobCommandCoordinator wildcard import not found')
+          coordinator_text = coordinator_text.replace(wildcard, explicit, 1)
+          coordinator_text = coordinator_text.replace('JobCommand.', 'DomainJobCommand.')
+          coordinator.write_text(coordinator_text, encoding='utf-8')
+
+          worker = Path(
+              'r40-src/app/src/main/java/com/aurum/bisttop20/jobs/TrackedDatabaseWorker.kt'
+          )
+          worker_text = worker.read_text(encoding='utf-8')
+          worker_imports = (
+              'import com.aurum.bisttop20.domain.jobs.JobModule\n'
+              'import com.aurum.bisttop20.domain.jobs.JobSnapshot\n'
+              'import com.aurum.bisttop20.domain.jobs.JobStatePolicy\n'
+              'import com.aurum.bisttop20.domain.jobs.JobStatus as DomainJobStatus\n'
+          )
+          if wildcard not in worker_text:
+              raise SystemExit('TrackedDatabaseWorker wildcard import not found')
+          worker_text = worker_text.replace(wildcard, worker_imports, 1)
+          worker_text = worker_text.replace('JobStatus.', 'DomainJobStatus.')
+          worker.write_text(worker_text, encoding='utf-8')
           PY
+
+          grep -n "DomainJobCommand" r40-src/app/src/main/java/com/aurum/bisttop20/jobs/JobCommandCoordinator.kt
+          grep -n "DomainJobStatus" r40-src/app/src/main/java/com/aurum/bisttop20/jobs/TrackedDatabaseWorker.kt
+          sed -n '100,112p' r40-src/app/src/main/java/com/aurum/bisttop20/MainActivity.kt
 
       - uses: actions/setup-java@v4
         with:
