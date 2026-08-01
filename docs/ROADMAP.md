@@ -23,7 +23,8 @@
 - [x] K1, K2, K3, K4 ortak model sözleşmesi ve uzman model çekirdeği
 - [x] K5 konsensüs modeli
 - [x] Değişmez K/S snapshot deposu
-- [ ] K_Tarihsel hedef etiketleme ve değerlendirme
+- [x] K_Tarihsel hedef etiketleme çekirdeği
+- [ ] K_Tarihsel ölçüm ve raporlama
 - [ ] S aday seçimi ve performans izleme
 - [ ] Zamanlayıcılar ve bakım komutları
 
@@ -33,8 +34,11 @@
 - [x] Aynı snapshot kimliğinin yeniden yazılmasını engelle.
 - [x] `featureTs <= predictionTs` veri sızıntısı kontrolü uygula.
 - [x] Tahmin payload'ını SHA-256 ile doğrulanabilir yap.
+- [x] Gün sonu ve ertesi işlem günü outcome üreticisini ekle.
+- [x] Reel Top 20 tanımından sabit `%15` filtresini kaldır.
+- [x] Veri kalite dışlamalarını açık neden koduna bağla.
 - [ ] Aynı gün erken seans snapshot zamanlarını sabitle.
-- [ ] Gün sonu ve ertesi işlem günü outcome üreticisini ekle.
+- [ ] Resmi BIST işlem günü/tatil takvimini otomatik kaynağa bağla.
 
 Her S üretiminde değişmez kayıt:
 
@@ -55,13 +59,13 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 
 ## Faz 4 — Ölçüm
 
-- Precision@20
-- Recall@20
-- aynı gün ve ertesi gün isabetleri
-- girişten Top 20 anına getiri
-- gün sonu ve ertesi gün kapanış getirisi
-- maksimum olumlu ve olumsuz hareket
-- model ve hisse bazında örneklem sayısı
+- [ ] Precision@20
+- [ ] Recall@20
+- [x] Aynı gün ve ertesi gün isabet etiketleri
+- [x] Girişten hedef kapanışına getiri
+- [x] Maksimum olumlu ve olumsuz hareket
+- [ ] Top 20'ye ilk giriş anı ve o ana kadarki getiri
+- [ ] Model ve hisse bazında örneklem sayısı
 
 ## Faz 5 — Formül iyileştirme
 
