@@ -33,7 +33,8 @@
 - [x] Erken/orta seans ve kapanış snapshot zamanlayıcı altyapısı
 - [x] Güvenli denetim ve bakım komutları
 - [x] S performans rapor sayfası
-- [ ] Üretim girdisi adaptörü ve gölge çalışma
+- [x] Üretim girdisi adaptörü
+- [ ] Uçtan uca gölge çalışma
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
