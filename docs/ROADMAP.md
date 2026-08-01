@@ -8,22 +8,33 @@
 
 ## Faz 1 — Veri bütünlüğü
 
-- Veriler şemasını 468 sütunluk sözleşmeye bağla.
-- Başlık, sayı, tarih ve sembol normalizasyonunu tekleştir.
-- Eski sütunları raporla; yedekleme sonrası açık bakım komutuyla ayıkla.
-- API yanıtlarını şema doğrulamasından geçir.
-- Kurumsal aksiyon ve anormal fiyat değişimi kontrolü ekle.
+- [x] Veriler şemasını 468 sütunluk sözleşmeye bağla.
+- [x] Başlık, sayı, tarih ve sembol normalizasyonunu tekleştir.
+- [x] Eski sütunları raporla; yedekleme sonrası açık bakım komutuyla ayıkla.
+- [x] API yanıtlarını şema doğrulamasından geçir.
+- [ ] Kurumsal aksiyon ve anormal fiyat değişimi kontrolü ekle.
 
 ## Faz 2 — Monolitten modüler yapıya geçiş
 
-- API istemcisi
-- Teknik gösterge hesapları
-- Tablo şemaları ve yazıcılar
-- K1, K2, K3, K4 uzman modelleri
-- K5 konsensüs modeli
-- K_Tarihsel snapshot ve değerlendirme
-- S aday seçimi ve performans izleme
-- Zamanlayıcılar ve bakım komutları
+- [x] API istemcisi
+- [x] Teknik gösterge hesapları
+- [x] `fetchAndCompute_` özellik üretim hattı
+- [x] Tablo şemaları ve Veriler repository katmanı
+- [ ] Tablo yazıcıları
+- [ ] K1, K2, K3, K4 uzman modelleri
+- [ ] K5 konsensüs modeli
+- [ ] K_Tarihsel snapshot ve değerlendirme
+- [ ] S aday seçimi ve performans izleme
+- [ ] Zamanlayıcılar ve bakım komutları
+
+### Özellik üretiminde tamamlanan düzeltmeler
+
+- Geçersiz tarihli satırlar hesaplamaya alınmıyor.
+- Aynı tarihteki mükerrer kayıtlar deterministik biçimde tekilleştiriliyor.
+- Beta fiyat seviyeleri yerine getiriler üzerinden hesaplanıyor.
+- Eksik gözlem içeren hareketli pencereler sıfır gibi değerlendirilmiyor.
+- `FD = PD` ve `FAVÖK = kapanış × hacim × 0,2` hesapları kanonik finansal veri olmaktan çıkarıldı.
+- Eski yaklaşık finansal alanlar yalnızca `legacyApprox` altında karşılaştırma amacıyla korunuyor.
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
