@@ -67,7 +67,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Maksimum olumlu ve olumsuz hareket
 - [x] Veri kapsamı ve eksik veri ayrımı
 - [x] Model, hisse ve seans bazında örneklem sayısı
-- [ ] Top 20'ye ilk giriş anı ve o ana kadarki getiri
+- [x] Top 20'ye ilk giriş anı ve o ana kadarki getiri
 
 ## Faz 5 — Formül iyileştirme
 
