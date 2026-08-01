@@ -22,11 +22,19 @@
 - [x] Tablo şemaları ve yazıcı altyapısı
 - [x] K1, K2, K3, K4 ortak model sözleşmesi ve uzman model çekirdeği
 - [x] K5 konsensüs modeli
-- [ ] K_Tarihsel snapshot ve değerlendirme
+- [x] Değişmez K/S snapshot deposu
+- [ ] K_Tarihsel hedef etiketleme ve değerlendirme
 - [ ] S aday seçimi ve performans izleme
 - [ ] Zamanlayıcılar ve bakım komutları
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
+
+- [x] Tahmin ile gerçekleşen sonucu ayrı tablolarda sakla.
+- [x] Aynı snapshot kimliğinin yeniden yazılmasını engelle.
+- [x] `featureTs <= predictionTs` veri sızıntısı kontrolü uygula.
+- [x] Tahmin payload'ını SHA-256 ile doğrulanabilir yap.
+- [ ] Aynı gün erken seans snapshot zamanlarını sabitle.
+- [ ] Gün sonu ve ertesi işlem günü outcome üreticisini ekle.
 
 Her S üretiminde değişmez kayıt:
 
