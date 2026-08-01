@@ -1,0 +1,105 @@
+name: Aurum Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, r40-release-candidate]
+    paths:
+      - 'r40-source-min.zip'
+      - '.github/workflows/android-release.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Expand R40 source archive
+        shell: bash
+        run: |
+          test -f r40-source-min.zip
+          unzip -q r40-source-min.zip -d r40-src
+          echo "PROJECT_DIR=$GITHUB_WORKSPACE/r40-src" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle --no-daemon clean test assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurum-debug-apk
+          path: r40-src/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Detect signing secrets
+        id: signing
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          AURUM_STORE_PASSWORD: ${{ secrets.AURUM_STORE_PASSWORD }}
+          AURUM_KEY_ALIAS: ${{ secrets.AURUM_KEY_ALIAS }}
+          AURUM_KEY_PASSWORD: ${{ secrets.AURUM_KEY_PASSWORD }}
+        run: |
+          if [[ -n "$RELEASE_KEYSTORE_B64" && -n "$AURUM_STORE_PASSWORD" && -n "$AURUM_KEY_ALIAS" && -n "$AURUM_KEY_PASSWORD" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore release keystore
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+        run: |
+          mkdir -p r40-src/release-input
+          echo "$RELEASE_KEYSTORE_B64" | base64 --decode > r40-src/release-input/aurum-release.jks
+
+      - name: Build signed release APK and AAB
+        if: steps.signing.outputs.enabled == 'true'
+        working-directory: ${{ env.PROJECT_DIR }}
+        env:
+          AURUM_STORE_FILE: ${{ env.PROJECT_DIR }}/release-input/aurum-release.jks
+          AURUM_STORE_PASSWORD: ${{ secrets.AURUM_STORE_PASSWORD }}
+          AURUM_KEY_ALIAS: ${{ secrets.AURUM_KEY_ALIAS }}
+          AURUM_KEY_PASSWORD: ${{ secrets.AURUM_KEY_PASSWORD }}
+        run: gradle --no-daemon assembleRelease bundleRelease
+
+      - name: Verify signed release
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          APK=$(find r40-src/app/build/outputs/apk/release -name '*.apk' | head -1)
+          test -n "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee APK_SIGNATURE_REPORT.txt
+          sha256sum "$APK" r40-src/app/build/outputs/bundle/release/*.aab | tee RELEASE_SHA256.txt
+
+      - name: Upload release artifacts
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurum-signed-release
+          path: |
+            r40-src/app/build/outputs/apk/release/*.apk
+            r40-src/app/build/outputs/bundle/release/*.aab
+            APK_SIGNATURE_REPORT.txt
+            RELEASE_SHA256.txt
+          if-no-files-found: error
