@@ -72,11 +72,22 @@ jobs:
               body = body.replace('plugins { kotlin("jvm") }',
                                   'plugins { alias(libs.plugins.kotlin.jvm) }')
               path.write_text(body, encoding='utf-8')
+
+          job_persistence = Path(
+              'r40-src/core-database/src/main/java/com/aurum/bisttop20/data/db/JobExecutionPersistence.kt'
+          )
+          job_text = job_persistence.read_text(encoding='utf-8')
+          nullable_line = '        val target = decision.targetStatus\n'
+          safe_line = '        val target = requireNotNull(decision.targetStatus) { decision.reason }\n'
+          if nullable_line in job_text:
+              job_text = job_text.replace(nullable_line, safe_line, 1)
+              job_persistence.write_text(job_text, encoding='utf-8')
+          elif safe_line not in job_text:
+              raise SystemExit('JobExecutionPersistence target status marker not found')
           PY
           grep -n "kotlin-jvm" r40-src/gradle/libs.versions.toml
           cat r40-src/core-model/build.gradle.kts
-          head -5 r40-src/data-warehouse/build.gradle.kts
-          head -5 r40-src/domain-kmodels/build.gradle.kts
+          grep -n "val target" r40-src/core-database/src/main/java/com/aurum/bisttop20/data/db/JobExecutionPersistence.kt
 
       - uses: actions/setup-java@v4
         with:
