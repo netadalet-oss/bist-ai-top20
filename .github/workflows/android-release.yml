@@ -46,19 +46,35 @@ jobs:
               text = text.replace(marker, marker + addition)
               catalog.write_text(text, encoding='utf-8')
 
+          root_build = Path('r40-src/build.gradle.kts')
+          root_text = root_build.read_text(encoding='utf-8')
+          ksp_marker = '    alias(libs.plugins.ksp) apply false\n'
+          jvm_line = '    alias(libs.plugins.kotlin.jvm) apply false\n'
+          if jvm_line not in root_text:
+              if ksp_marker not in root_text:
+                  raise SystemExit('root plugin marker not found')
+              root_text = root_text.replace(ksp_marker, ksp_marker + jvm_line)
+              root_build.write_text(root_text, encoding='utf-8')
+
+          Path('r40-src/core-model/build.gradle.kts').write_text(
+              '''plugins { alias(libs.plugins.kotlin.jvm) }\n\n'''
+              '''kotlin { jvmToolchain(17) }\n\n'''
+              '''dependencies { testImplementation(libs.junit) }\n''',
+              encoding='utf-8'
+          )
+
           for relative in (
               'r40-src/data-warehouse/build.gradle.kts',
               'r40-src/domain-kmodels/build.gradle.kts',
           ):
               path = Path(relative)
               body = path.read_text(encoding='utf-8')
-              body = body.replace('plugins { alias(libs.plugins.kotlin.jvm) }',
-                                  'plugins { alias(libs.plugins.kotlin.jvm) }')
               body = body.replace('plugins { kotlin("jvm") }',
                                   'plugins { alias(libs.plugins.kotlin.jvm) }')
               path.write_text(body, encoding='utf-8')
           PY
           grep -n "kotlin-jvm" r40-src/gradle/libs.versions.toml
+          cat r40-src/core-model/build.gradle.kts
           head -5 r40-src/data-warehouse/build.gradle.kts
           head -5 r40-src/domain-kmodels/build.gradle.kts
 
@@ -80,7 +96,8 @@ jobs:
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
           gradle --version
-          gradle --no-daemon projects
+          gradle --no-daemon --stacktrace projects
+          gradle --no-daemon --stacktrace :app:dependencies --configuration debugRuntimeClasspath
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
