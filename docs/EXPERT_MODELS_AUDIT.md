@@ -11,7 +11,7 @@
 
 1. Modeller aynı görünümde çıktı üretse de ortak bir makine sözleşmesine sahip değildi.
 2. Ağırlıklı toplamlarda eksik bileşenler `|| 0` ile sıfır kabul ediliyordu. Bu, eksik veri ile gerçek düşük skoru aynılaştırıyordu.
-3. `KS_breakTies_` eşit skorları ayırmak için 0–1 arası tam puan ekliyordu; yakın fakat eşit olmayan sıraları da bozabiliyordu.
+3. `KS_breakTies_` eşit skorları ayırmak için 0–1 arası tam puan ekliyordu; bu değer skorun kendisini maddi biçimde değiştirebiliyordu.
 4. Skor dağılımları ve veri kapsamı sonuçta raporlanmıyordu.
 
 ## Model bazlı bulgular
@@ -51,6 +51,10 @@ Eski sürüm, tüm evrende aday üreten ilk pencereyi seçip aynı pencereyi bü
   source
 }
 ```
+
+## Test durumu
+
+`apps-script/tests/ExpertModelsTest.gs` sözleşme ve regresyon testlerini içerir. Testler Apps Script ortamında `runExpertModelTests_()` çağrısıyla çalıştırılmalıdır. Bu commit test kodunu ekler; çalıştırılmış test sonucu iddiasında bulunmaz.
 
 ## Bilinçli sınır
 
