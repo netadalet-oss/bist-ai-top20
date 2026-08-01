@@ -36,6 +36,7 @@
 - [x] Üretim girdisi adaptörü
 - [x] Uçtan uca gölge liste karşılaştırma altyapısı
 - [x] Gölge kollar için ayrı giriş fiyatı ve ortak outcome deneyi
+- [x] Gölge kollar için ham barlardan ayrı MFE/MAE hesaplama
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -89,6 +90,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] S performans özet ve hisse bazlı detay raporu
 - [x] Legacy/yeni S sembol örtüşmesi ve sıra farkı raporu
 - [x] Legacy/yeni S için ortak outcome üzerinden Precision ve getiri farkı
+- [x] Legacy/yeni S için kol giriş fiyatına göre MFE/MAE farkı
 
 ## Faz 5 — Formül iyileştirme
 
