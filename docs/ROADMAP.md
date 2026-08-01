@@ -29,6 +29,7 @@
 - [x] Walk-forward kalibrasyon çekirdeği
 - [x] Snapshot/outcome kalibrasyon veri adaptörü
 - [x] Sürümlü model registry
+- [x] Aktif model ağırlıklarını S runtime seçimine bağlama
 - [ ] S performans rapor sayfası
 - [ ] Zamanlayıcılar ve bakım komutları
 
@@ -42,6 +43,7 @@
 - [x] Reel Top 20 tanımından sabit `%15` filtresini kaldır.
 - [x] Veri kalite dışlamalarını açık neden koduna bağla.
 - [x] S snapshot'ında giriş fiyatını sabitle.
+- [x] Snapshot'a kullanılan SAME_DAY/NEXT_DAY registry sürüm ve hash bilgisini yaz.
 - [ ] Aynı gün erken seans snapshot zamanlarını sabitle.
 - [ ] Resmi BIST işlem günü/tatil takvimini otomatik kaynağa bağla.
 
@@ -58,6 +60,9 @@ same_day_score
 next_day_score
 source_models
 model_version
+same_day_model_version
+next_day_model_version
+model_source_hashes
 ```
 
 Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
@@ -84,6 +89,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Aynı gün ve ertesi gün S skorlarını ayır.
 - [x] Aynı gün ve ertesi gün için veri sızıntısız ağırlık arama altyapısı kur.
 - [x] Kalibre edilmiş ağırlıkları aday/aktif/emekli durumlarıyla sürümlü model kaydına bağla.
+- [x] Aktif registry ağırlıklarını runtime sırasında otomatik uygula.
 - [ ] Gerçek snapshot birikimiyle uzman modelleri ayrı hedefler için kalibre et.
 - [ ] Fold kararlılığı ve bootstrap güven aralıkları ekle.
 - [ ] İşlem maliyeti, likidite ve kayma etkisini amaç fonksiyonuna ekle.
