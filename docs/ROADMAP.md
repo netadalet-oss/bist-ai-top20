@@ -8,33 +8,23 @@
 
 ## Faz 1 — Veri bütünlüğü
 
-- [x] Veriler şemasını 468 sütunluk sözleşmeye bağla.
-- [x] Başlık, sayı, tarih ve sembol normalizasyonunu tekleştir.
-- [x] Eski sütunları raporla; yedekleme sonrası açık bakım komutuyla ayıkla.
-- [x] API yanıtlarını şema doğrulamasından geçir.
-- [ ] Kurumsal aksiyon ve anormal fiyat değişimi kontrolü ekle.
+- Veriler şemasını 468 sütunluk sözleşmeye bağla.
+- Başlık, sayı, tarih ve sembol normalizasyonunu tekleştir.
+- Eski sütunları raporla; yedekleme sonrası açık bakım komutuyla ayıkla.
+- API yanıtlarını şema doğrulamasından geçir.
+- Kurumsal aksiyon ve anormal fiyat değişimi kontrolü ekle.
 
 ## Faz 2 — Monolitten modüler yapıya geçiş
 
 - [x] API istemcisi
 - [x] Teknik gösterge hesapları
-- [x] `fetchAndCompute_` özellik üretim hattı
-- [x] Tablo şemaları ve Veriler repository katmanı
-- [ ] Tablo yazıcıları
-- [ ] K1, K2, K3, K4 uzman modelleri
+- [x] Özellik üretim hattı
+- [x] Tablo şemaları ve yazıcı altyapısı
+- [x] K1, K2, K3, K4 ortak model sözleşmesi ve uzman model çekirdeği
 - [ ] K5 konsensüs modeli
 - [ ] K_Tarihsel snapshot ve değerlendirme
 - [ ] S aday seçimi ve performans izleme
 - [ ] Zamanlayıcılar ve bakım komutları
-
-### Özellik üretiminde tamamlanan düzeltmeler
-
-- Geçersiz tarihli satırlar hesaplamaya alınmıyor.
-- Aynı tarihteki mükerrer kayıtlar deterministik biçimde tekilleştiriliyor.
-- Beta fiyat seviyeleri yerine getiriler üzerinden hesaplanıyor.
-- Eksik gözlem içeren hareketli pencereler sıfır gibi değerlendirilmiyor.
-- `FD = PD` ve `FAVÖK = kapanış × hacim × 0,2` hesapları kanonik finansal veri olmaktan çıkarıldı.
-- Eski yaklaşık finansal alanlar yalnızca `legacyApprox` altında karşılaştırma amacıyla korunuyor.
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -67,12 +57,12 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 
 ## Faz 5 — Formül iyileştirme
 
-- Skorları ortak ölçeğe kalibre et.
-- Eksik veride ağırlıkları yeniden normalize et.
-- K3 pencere seçimini hisse bazında yap.
-- K5'i gerçek model kapsamı ve sıralama tutarlılığına bağla.
-- S'de sabit koltuk dağıtımını kaldır.
-- Aynı gün ve ertesi gün modellerini ayır.
+- [x] Eksik veride ağırlıkları mevcut bileşenlere göre yeniden normalize et.
+- [x] K3 pencere seçimini hisse bazında yap.
+- [ ] Skorları gerçek hedef verisiyle ortak ölçeğe kalibre et.
+- [ ] K5'i gerçek model kapsamı ve sıralama tutarlılığına bağla.
+- [ ] S'de sabit koltuk dağıtımını kaldır.
+- [ ] Aynı gün ve ertesi gün modellerini ayır.
 
 ## Faz 6 — Uygulama katmanı
 
