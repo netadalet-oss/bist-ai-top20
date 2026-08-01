@@ -24,7 +24,7 @@
 - [x] K5 konsensüs modeli
 - [x] Değişmez K/S snapshot deposu
 - [x] K_Tarihsel hedef etiketleme çekirdeği
-- [ ] K_Tarihsel ölçüm ve raporlama
+- [x] K_Tarihsel ölçüm ve raporlama
 - [ ] S aday seçimi ve performans izleme
 - [ ] Zamanlayıcılar ve bakım komutları
 
@@ -59,13 +59,15 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 
 ## Faz 4 — Ölçüm
 
-- [ ] Precision@20
-- [ ] Recall@20
+- [x] Precision@20
+- [x] Recall@20
 - [x] Aynı gün ve ertesi gün isabet etiketleri
 - [x] Girişten hedef kapanışına getiri
+- [x] Ortalama, medyan ve çeyrek getiri dağılımı
 - [x] Maksimum olumlu ve olumsuz hareket
+- [x] Veri kapsamı ve eksik veri ayrımı
+- [x] Model, hisse ve seans bazında örneklem sayısı
 - [ ] Top 20'ye ilk giriş anı ve o ana kadarki getiri
-- [ ] Model ve hisse bazında örneklem sayısı
 
 ## Faz 5 — Formül iyileştirme
 
