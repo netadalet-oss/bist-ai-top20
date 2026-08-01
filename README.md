@@ -1,26 +1,33 @@
 # Aurum BIST Top 20
 
-BIST hisselerinin aynı gün veya sonraki işlem gününde gerçek yükselenler Top 20 listesine girme olasılığını ölçmek ve geliştirmek için kurulan modüler araştırma ve uygulama deposu.
+BIST en çok yükselen Reel Top 20 adaylarını aynı gün veya bir sonraki işlem günü için önceden belirlemeye yönelik, kaynak kodu izlenebilir ve test edilebilir hâle getiren çalışma deposu.
 
-## Çalışma ilkeleri
+## Aktif geliştirme
 
-- Drive'daki mevcut Apps Script kaynak kodu, değiştirilmeyen referans kaynaktır.
-- Yeni geliştirmeler `apps-script/src` altında küçük ve test edilebilir modüller halinde yürütülür.
-- Her maddi değişiklik ayrı dal ve pull request ile izlenir.
-- Tahmin anı ile sonuç anı ayrılır; ileriye bakış ve geçmişi yeniden yazma yasaktır.
-- Veri şeması, sayı/tarih dönüşümü ve tablo senkronizasyonu model formüllerinden önce doğrulanır.
+- Dal: `refactor/apps-script-foundation`
+- Taslak PR: `#2`
+- Roadmap: `docs/ROADMAP.md`
 
-## Dizinler
+## Modüler Apps Script yapısı
 
 ```text
-apps-script/src/       Google Apps Script modülleri
-apps-script/legacy/    Kaynak sürüm envanteri ve taşıma notları
-docs/                  Mimari, denetim ve geliştirme planı
-tests/                 Saf fonksiyon ve şema testleri
+apps-script/src/
+├── 00_Config.gs
+├── 01_DataNormalization.gs
+├── 02_SheetSchema.gs
+├── 03_RuntimeSafety.gs
+├── 04_DataContracts.gs
+├── 05_ApiClient.gs
+├── 06_VerilerRepository.gs
+├── 07_Indicators.gs
+└── 08_FeaturePipeline.gs
 ```
 
-## Aktif geliştirme dalı
+Test girişleri:
 
-`refactor/apps-script-foundation`
+```javascript
+runIndicatorTests_();
+runFeaturePipelineTests_();
+```
 
-Bu dalın ilk kapsamı, veri tabanının doğru okunmasını engelleyen biçimsel, sözdizimsel, başlık, sütun, sayı, tarih, kilit ve yapılandırma hatalarını ayıklamaktır. K1–K5 ve S model ağırlıkları bu temel güvenilir hale geldikten sonra revize edilecektir.
+Eski monolit davranış üretimden hemen kaldırılmaz. Yeni modüller aynı ham veri üzerinde karşılaştırmalı olarak doğrulandıktan sonra çağrı noktaları aşamalı biçimde taşınır.
