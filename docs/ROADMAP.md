@@ -21,7 +21,7 @@
 - [x] Özellik üretim hattı
 - [x] Tablo şemaları ve yazıcı altyapısı
 - [x] K1, K2, K3, K4 ortak model sözleşmesi ve uzman model çekirdeği
-- [ ] K5 konsensüs modeli
+- [x] K5 konsensüs modeli
 - [ ] K_Tarihsel snapshot ve değerlendirme
 - [ ] S aday seçimi ve performans izleme
 - [ ] Zamanlayıcılar ve bakım komutları
@@ -59,8 +59,8 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 
 - [x] Eksik veride ağırlıkları mevcut bileşenlere göre yeniden normalize et.
 - [x] K3 pencere seçimini hisse bazında yap.
+- [x] K5'i gerçek model kapsamı ve sıralama tutarlılığına bağla.
 - [ ] Skorları gerçek hedef verisiyle ortak ölçeğe kalibre et.
-- [ ] K5'i gerçek model kapsamı ve sıralama tutarlılığına bağla.
 - [ ] S'de sabit koltuk dağıtımını kaldır.
 - [ ] Aynı gün ve ertesi gün modellerini ayır.
 
