@@ -85,9 +85,6 @@ jobs:
           elif safe_line not in job_text:
               raise SystemExit('JobExecutionPersistence target status marker not found')
           PY
-          grep -n "kotlin-jvm" r40-src/gradle/libs.versions.toml
-          cat r40-src/core-model/build.gradle.kts
-          grep -n "val target" r40-src/core-database/src/main/java/com/aurum/bisttop20/data/db/JobExecutionPersistence.kt
 
       - uses: actions/setup-java@v4
         with:
@@ -112,7 +109,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle --no-daemon --stacktrace clean test assembleDebug
+        run: gradle --no-daemon --stacktrace clean assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -120,6 +117,20 @@ jobs:
           name: aurum-debug-apk
           path: r40-src/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Run unit tests
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle --no-daemon --stacktrace test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurum-test-reports
+          path: |
+            r40-src/**/build/reports/tests/**
+            r40-src/**/build/test-results/**
+          if-no-files-found: warn
 
       - name: Detect signing secrets
         id: signing
