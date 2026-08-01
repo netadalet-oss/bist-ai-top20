@@ -39,6 +39,7 @@
 - [x] Gölge kollar için ham barlardan ayrı MFE/MAE hesaplama
 - [x] Merkezi BIST işlem günü ve yarım gün takvim sözleşmesi
 - [x] İşlem maliyeti, makas, kayma ve likidite modeli
+- [x] Fold bootstrap güven aralığı ve ağırlık kararlılığı analizi
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -95,6 +96,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Legacy/yeni S için ortak outcome üzerinden Precision ve getiri farkı
 - [x] Legacy/yeni S için kol giriş fiyatına göre MFE/MAE farkı
 - [x] Brüt/net getiri ve likidite kapsamı ayrımı
+- [x] Bootstrap güven aralıkları ve fold/ağırlık kararlılığı raporu
 
 ## Faz 5 — Formül iyileştirme
 
@@ -107,8 +109,8 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Kalibre edilmiş ağırlıkları aday/aktif/emekli durumlarıyla sürümlü model kaydına bağla.
 - [x] Aktif registry ağırlıklarını runtime sırasında otomatik uygula.
 - [x] İşlem maliyeti, likidite ve kayma etkisini ekonomik amaç fonksiyonuna ekle.
+- [x] Fold kararlılığı ve bootstrap güven aralıkları ekle.
 - [ ] Gerçek snapshot birikimiyle uzman modelleri ayrı hedefler için kalibre et.
-- [ ] Fold kararlılığı ve bootstrap güven aralıkları ekle.
 - [ ] Gerçek gerçekleşme verisiyle maliyet ve piyasa etkisi katsayılarını kalibre et.
 
 ## Faz 6 — Uygulama katmanı
