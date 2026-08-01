@@ -35,7 +35,7 @@
 - [x] S performans rapor sayfası
 - [x] Üretim girdisi adaptörü
 - [x] Uçtan uca gölge liste karşılaştırma altyapısı
-- [ ] Gölge kollar için ayrı giriş fiyatı ve outcome deneyi
+- [x] Gölge kollar için ayrı giriş fiyatı ve ortak outcome deneyi
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -50,6 +50,7 @@
 - [x] Snapshot'a kullanılan SAME_DAY/NEXT_DAY registry sürüm ve hash bilgisini yaz.
 - [x] Aynı işlem günü/session/horizon için mükerrer başarılı snapshot'ı engelle.
 - [x] Erken seans snapshot oturumlarını adlandır ve zamanlayıcı tanımlarını sabitle.
+- [x] Legacy ve yeni gölge kolların giriş fiyatlarını ayrı sabitle.
 - [ ] Resmi BIST işlem günü/tatil takvimini otomatik kaynağa bağla.
 
 Her S üretiminde değişmez kayıt:
@@ -87,6 +88,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Scheduler çalışma durumu, mükerrer atlama ve hata run-log kaydı
 - [x] S performans özet ve hisse bazlı detay raporu
 - [x] Legacy/yeni S sembol örtüşmesi ve sıra farkı raporu
+- [x] Legacy/yeni S için ortak outcome üzerinden Precision ve getiri farkı
 
 ## Faz 5 — Formül iyileştirme
 
