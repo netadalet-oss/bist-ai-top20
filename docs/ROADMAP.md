@@ -32,7 +32,8 @@
 - [x] Aktif model ağırlıklarını S runtime seçimine bağlama
 - [x] Erken/orta seans ve kapanış snapshot zamanlayıcı altyapısı
 - [x] Güvenli denetim ve bakım komutları
-- [ ] S performans rapor sayfası
+- [x] S performans rapor sayfası
+- [ ] Üretim girdisi adaptörü ve gölge çalışma
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -82,6 +83,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Top 20'ye ilk giriş anı ve o ana kadarki getiri
 - [x] Kronolojik train/test fold raporları
 - [x] Scheduler çalışma durumu, mükerrer atlama ve hata run-log kaydı
+- [x] S performans özet ve hisse bazlı detay raporu
 
 ## Faz 5 — Formül iyileştirme
 
