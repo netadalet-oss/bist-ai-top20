@@ -34,7 +34,8 @@
 - [x] Güvenli denetim ve bakım komutları
 - [x] S performans rapor sayfası
 - [x] Üretim girdisi adaptörü
-- [ ] Uçtan uca gölge çalışma
+- [x] Uçtan uca gölge liste karşılaştırma altyapısı
+- [ ] Gölge kollar için ayrı giriş fiyatı ve outcome deneyi
 
 ## Faz 3 — Doğru hedef ve snapshot sistemi
 
@@ -85,6 +86,7 @@ Sonuçlar tahmin kaydını değiştirmeden sonradan eklenir.
 - [x] Kronolojik train/test fold raporları
 - [x] Scheduler çalışma durumu, mükerrer atlama ve hata run-log kaydı
 - [x] S performans özet ve hisse bazlı detay raporu
+- [x] Legacy/yeni S sembol örtüşmesi ve sıra farkı raporu
 
 ## Faz 5 — Formül iyileştirme
 
