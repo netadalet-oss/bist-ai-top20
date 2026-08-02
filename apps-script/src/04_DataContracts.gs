@@ -6,7 +6,7 @@
  * migrated.
  */
 
-const AURUM_SCHEMA_VERSION = '2026-08-02.1';
+const AURUM_SCHEMA_VERSION = '2026-08-02.2';
 
 const AURUM_CONTRACTS = Object.freeze({
   VERILER_REQUIRED_HEADERS: Object.freeze([
@@ -58,6 +58,21 @@ const AURUM_CONTRACTS = Object.freeze({
     'schemaVersion'
   ])
 });
+
+function AURUM_normalizeHeader_(value) {
+  if (typeof normalizeHeader_ === 'function') return normalizeHeader_(value);
+  if (typeof VERILER_CANONICAL_SCHEMA !== 'undefined' &&
+      VERILER_CANONICAL_SCHEMA &&
+      typeof VERILER_CANONICAL_SCHEMA.normalizeHeader === 'function') {
+    return VERILER_CANONICAL_SCHEMA.normalizeHeader(value);
+  }
+  return String(value == null ? '' : value)
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[\r\n]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function AURUM_assert_(condition, message) {
   if (!condition) throw new Error(String(message || 'Contract assertion failed'));
