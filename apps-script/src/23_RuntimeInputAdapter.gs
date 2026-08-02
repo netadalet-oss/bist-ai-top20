@@ -7,7 +7,7 @@
 var RUNTIME_INPUT_ADAPTER = (function () {
   'use strict';
 
-  const VERSION = 'RUNTIME-INPUT-1.1.0';
+  const VERSION = 'RUNTIME-INPUT-1.2.0';
 
   function normalizeHeaderLocal_(value) {
     if (typeof normalizeHeader_ === 'function') return normalizeHeader_(value);
@@ -107,7 +107,7 @@ var RUNTIME_INPUT_ADAPTER = (function () {
     if (!symbol) return null;
 
     const featureTs = date_(first_(source, ['VeriZamani', 'Veri Zamanı', 'featureTs']));
-    const feature = {
+    return {
       symbol: symbol,
       sym: symbol,
       featureTs: featureTs,
@@ -138,8 +138,6 @@ var RUNTIME_INPUT_ADAPTER = (function () {
       history: history_(source, opts.historyDepth || 30),
       raw: source
     };
-
-    return feature;
   }
 
   function validateFeatureTime_(feature, predictionTs) {
@@ -206,6 +204,12 @@ var RUNTIME_INPUT_ADAPTER = (function () {
       throw new Error('Runtime için geçerli özellik kaydı bulunamadı.');
     }
 
+    const qualityOptions = Object.assign({}, input.qualityOptions || {});
+    if (qualityOptions.historyDepth == null && input.options && input.options.historyDepth != null) {
+      qualityOptions.historyDepth = input.options.historyDepth;
+    }
+    const qualityGate = RUNTIME_DATA_QUALITY_GATE.enforce(read.features, qualityOptions);
+
     const expert = buildExpertResults(read.features);
     const k5 = CONSENSUS_MODEL.build(expert, input.consensusOptions || {});
     const all = Object.assign({}, expert, { K5: k5 });
@@ -216,6 +220,7 @@ var RUNTIME_INPUT_ADAPTER = (function () {
       horizon: String(input.horizon || 'COMBINED').toUpperCase(),
       sessionKind: String(input.sessionKind || input.horizon || 'COMBINED'),
       features: read.features,
+      qualityGate: qualityGate,
       modelResultsByName: all,
       modelResults: flatten_(all),
       rejected: read.rejected,
