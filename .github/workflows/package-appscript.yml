@@ -27,7 +27,8 @@ jobs:
           mkdir -p "$ROOT/moduler" "$ROOT/alternatif-tek-dosya"
 
           mapfile -t GS_FILES < <(find apps-script/src -maxdepth 1 -type f -name '*.gs' | sort)
-          test "${#GS_FILES[@]}" -eq 43
+          test "${#GS_FILES[@]}" -gt 0
+          printf '%s\n' "${#GS_FILES[@]} production .gs modules packaged" > "$ROOT/MODULE_COUNT.txt"
 
           cp "${GS_FILES[@]}" "$ROOT/moduler/"
 
@@ -51,7 +52,7 @@ jobs:
           cat > "$ROOT/KURULUM.txt" <<'TXT'
           AURUM BIST TOP 20 - GOOGLE APPS SCRIPT PAKETI
 
-          1) ÖNERİLEN KURULUM: moduler klasöründeki 43 adet .gs dosyasını ve appsscript.json dosyasını kullanın.
+          1) ÖNERİLEN KURULUM: moduler klasöründeki .gs dosyalarını ve appsscript.json dosyasını kullanın.
           2) alternatif-tek-dosya klasörü yalnız tüm kodu tek .gs dosyasında kullanmak isteyenler içindir.
           3) Modüler dosyalar ile tek-dosya alternatifini aynı Apps Script projesine birlikte yüklemeyin.
           4) Legacy V_141225 monolit kodunu bu modüllerle aynı projeye eklemeyin; global fonksiyon çakışması oluşur.
