@@ -47,6 +47,11 @@ function parseNumber_(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/* Compatibility entry point used by integrity and legacy-reader contracts. */
+function parseLocalizedNumber_(value) {
+  return parseNumber_(value);
+}
+
 function parseEpochDate_(value) {
   if (value instanceof Date && !isNaN(value.getTime())) return value;
   if (typeof value === 'number' && Number.isFinite(value)) {
