@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/build-behavior-dna-pilot.yml'
       - 'scripts/run_pilot_behavior_dna.py'
+      - 'scripts/run_pilot_behavior_dna_resilient.py'
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
@@ -16,12 +17,15 @@ on:
     paths:
       - '.github/workflows/build-behavior-dna-pilot.yml'
       - 'scripts/run_pilot_behavior_dna.py'
+      - 'scripts/run_pilot_behavior_dna_resilient.py'
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
 
 permissions:
   contents: read
+
+actions:
 
 concurrency:
   group: behavior-dna-pilot-${{ github.ref }}
@@ -65,7 +69,7 @@ jobs:
         run: pytest -q
 
       - name: Build 100-behavior real-data database
-        run: python scripts/run_pilot_behavior_dna.py
+        run: python scripts/run_pilot_behavior_dna_resilient.py
 
       - name: Validate acceptance criteria
         run: |
@@ -73,6 +77,7 @@ jobs:
           test -s artifacts/behavior_dna/event_study.parquet
           test -s artifacts/behavior_dna/behavior_dna.sqlite
           test -s artifacts/behavior_dna/BehaviorDNA.xlsx
+          test -s artifacts/behavior_dna/source_failures.csv
           python - <<'PY'
           import json
           from pathlib import Path
@@ -83,13 +88,16 @@ jobs:
           report = json.loads((root / 'run_report.json').read_text())
           assert report['stock_count'] >= 10, report
           assert report['market_behavior_count'] >= 100, report
+          assert report['behavior_definition_count'] == 100, report
+          assert report['independent_behavior_family_count'] == 20, report
+          assert report['threshold_variant_count'] == 80, report
           assert report['stock_behavior_profile_count'] >= 1000, report
-          assert report['event_count'] > 0, report
-          assert report['behavior_rows'] > 0, report
+          assert report['event_count'] > 0 and report['behavior_rows'] > 0, report
           profiles = pd.read_parquet(root / 'behavior_dna.parquet')
           events = pd.read_parquet(root / 'event_study.parquet')
           assert len(profiles) >= 1000 and profiles['symbol'].nunique() >= 10
           assert len(events) > 0
+          assert {'sector_data_available','sector_index_used','sector_fallback_level'}.issubset(events.columns)
           required = {'README','Market_Behaviors_100','Stock_Universe','Event_Dates','Behavior_DNA','Event_Study','Stock_Summaries','Sector_Summaries','Market_Regimes','Coverage','Missing_Data','Data_Quality','Sources','Methodology','SHA256SUMS'}
           workbook = openpyxl.load_workbook(root / 'BehaviorDNA.xlsx', read_only=True)
           assert required.issubset(workbook.sheetnames), required - set(workbook.sheetnames)
