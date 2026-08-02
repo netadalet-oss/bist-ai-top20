@@ -10,7 +10,7 @@
 var APPS_SCRIPT_INTEGRITY_AUDIT = (function () {
   'use strict';
 
-  const VERSION = 'APPS-SCRIPT-INTEGRITY-1.0.0';
+  const VERSION = 'APPS-SCRIPT-INTEGRITY-1.0.1';
 
   const REQUIRED_GLOBALS = Object.freeze([
     { name: 'BIST_CONFIG', kind: 'object', layer: 'config' },
@@ -74,8 +74,8 @@ var APPS_SCRIPT_INTEGRITY_AUDIT = (function () {
       { owner: 'CONSENSUS_MODEL', methods: ['build'] },
       { owner: 'RUNTIME_INPUT_ADAPTER', methods: ['toFeature','readFeatures','buildExpertResults','build'] },
       { owner: 'MODEL_FEATURE_COVERAGE_AUDIT', methods: ['auditFeatures','auditLive'] },
-      { owner: 'RUNTIME_DATA_QUALITY_GATE', methods: ['evaluate','enforce'] },
-      { owner: 'RUN_LOG_QUALITY_INTEGRATION', methods: ['describeError'] },
+      { owner: 'RUNTIME_DATA_QUALITY_GATE', methods: ['evaluate','enforce','assertAllowed'] },
+      { owner: 'RUN_LOG_QUALITY_INTEGRATION', methods: ['fromError','safeJson'] },
       { owner: 'SCHEDULER_AND_MAINTENANCE', methods: ['runSession','audit','maintenanceAudit'] }
     ];
 
