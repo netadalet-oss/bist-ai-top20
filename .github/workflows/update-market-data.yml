@@ -4,6 +4,12 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '*/30 5-16 * * 1-5'
+  push:
+    branches: ["mobile/aurum-top20-pro-x"]
+    paths:
+      - 'tools/update_market_repository.py'
+      - '.github/workflows/update-market-data.yml'
+      - 'data/symbols.txt'
 
 permissions:
   contents: write
