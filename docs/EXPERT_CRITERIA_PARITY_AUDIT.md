@@ -6,59 +6,63 @@ This audit compares the legacy `KS_build_K1`, `KS_build_K2`, `KS_build_K3`, and 
 
 The audit distinguishes implementation defects from unvalidated financial hypotheses. A criterion is not treated as economically correct merely because its code direction is internally consistent.
 
-## Confirmed fixes already present
+## Confirmed implementation fixes
 
 - Missing K1 subcomponents are no longer silently converted to numeric zero; available weights are renormalized subject to minimum coverage.
+- Dotted fallback paths such as `latest.hacimDeg` and `latest.kapanis` are resolved through `valueAtPath_`.
+- K1 lower-band position is clamped to the nominal 0-1 interval before cross-sectional normalization.
 - Missing K2 EMA inputs no longer produce a false EMA-stack signal.
 - K3 adaptive windows are evaluated per symbol instead of selecting the first window that produces any candidate anywhere in the universe.
 - K3 candidates without a valid recovery pattern fail closed with an explicit reason.
 - K4 partial horizon availability is handled with coverage-aware renormalization.
-- K4 zero 1-month return leaves stability unavailable instead of forcing a zero contribution.
+- K4 stability no longer uses `abs(return1M)`. It is available only when 1-month return is positive and is calculated as `volatility21 / return1M`.
+- Negative or zero 1-month returns cannot receive a positive K4 stability contribution.
 
-## Open release blocker
+## Closed release blocker
 
-### K4 stability loses return direction
+### K4 stability return direction
 
-Both implementations use:
+The previous definition:
 
 ```text
 volatility21 / abs(return1M)
 ```
 
-This treats a large negative 1-month return and an equally large positive return as identical denominators. Because lower ratios receive better stability scores, a materially negative return can still contribute a strong stability component.
+removed return direction and could reward a materially negative observation. The modular definition is now:
 
-The model must not be promoted until the stability definition preserves return direction or otherwise prevents negative-return observations from receiving a positive stability contribution.
+```text
+return1M > 0 ? volatility21 / return1M : null
+```
+
+The blocker `K4_STABILITY_ABSOLUTE_RETURN_SIGN_LOSS` is therefore marked `FIXED`.
 
 ## Quarantined hypotheses
 
 ### K1 volatility direction
 
-K1 rewards larger short-, medium-, and long-window volatility values and larger volatility ratios. That direction may identify expansion or breakout regimes, but it is not inherently a quality signal. It remains quarantined until SAME_DAY outcome evidence demonstrates incremental benefit after costs.
-
-### K1 lower-band position
-
-The raw lower-band position is not clamped. Values below the lower band or above the upper band can fall outside the nominal 0-1 interval and then be hidden by cross-sectional normalization.
+K1 rewards larger short-, medium-, and long-window volatility values and larger volatility ratios. That direction may identify expansion or breakout regimes, but it is not inherently a quality signal. It remains quarantined until SAME_DAY and NEXT_DAY outcome evidence demonstrates incremental benefit after costs.
 
 ### K2 RSI 55 symmetry
 
-Absolute distance from RSI 55 is symmetric. For example, RSI values above and below 55 at equal distance receive equal treatment even though their directional meanings may differ. This is a calibration hypothesis, not a verified rule.
+Absolute distance from RSI 55 is symmetric. For example, RSI values above and below 55 at equal distance receive equal treatment even though their directional meanings may differ. This remains a calibration hypothesis.
 
 ### K3 deeper-dip reward
 
-After the minimum drawdown threshold, a deeper dip always receives a better depth score. No explicit falling-knife or maximum-drawdown penalty exists.
+After the minimum drawdown threshold, a deeper dip always receives a better depth score. No explicit falling-knife or maximum-drawdown penalty exists. This remains quarantined until attributed outcome evidence supports the direction.
 
-## Implementation defect
+## Open methodological item
 
-`EXPERT_MODELS.n_()` reads `row[name]` directly. Consequently, aliases containing dotted paths, such as `latest.hacimDeg`, are not resolved. The alias is currently dead unless the source object literally contains a property with a dot in its name.
+K2 EMA gaps, MACD, RSI distance, and momentum are still primarily cross-sectional. A weak market universe can therefore produce a relative leader without satisfying an absolute trend threshold. This is recorded as `K2_RELATIVE_ONLY_NORMALIZATION` and must be evaluated through shadow outcomes before active promotion.
 
 ## Promotion decision
 
-The expert criteria set is not eligible for active-model promotion while `K4_STABILITY_ABSOLUTE_RETURN_SIGN_LOSS` remains open. Quarantined criteria may remain in shadow mode only and require horizon-specific outcome attribution before activation.
+There is no unresolved implementation blocker. However, the expert criteria set remains in shadow-only mode while quarantined or open hypotheses exist. Active promotion requires horizon-specific attribution demonstrating incremental Precision@20 and net return contribution.
 
-## Test entry point
+## Test entry points
 
 ```javascript
+runExpertModelTests_();
 runExpertCriteriaParityAuditTests_();
 ```
 
-The test verifies audit-state integrity. It does not claim that Apps Script tests have been executed in the live workbook.
+The tests verify implementation and audit-state contracts. They do not claim that Apps Script tests have been executed in the live workbook.
