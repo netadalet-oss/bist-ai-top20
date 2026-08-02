@@ -1,0 +1,10 @@
+{
+  "ok": false,
+  "status": "NOT_UPDATED_YET",
+  "generatedAt": null,
+  "providerOrder": ["ISYATIRIM", "ISYATIRIM_LIVE", "YAHOO", "YAHOO_QUOTE", "BIGPARA", "STOOQ"],
+  "universeSize": 0,
+  "top20": [],
+  "symbols": {},
+  "errors": ["GitHub Actions veri güncelleme işi henüz başarılı çalışmadı."]
+}
