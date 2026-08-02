@@ -2,6 +2,8 @@ name: Build Aurum Android APK
 on:
   push:
     branches: ["mobile/aurum-top20-pro-x"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 permissions:
   contents: read
