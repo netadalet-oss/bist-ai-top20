@@ -201,10 +201,17 @@ var VERILER_REPOSITORY = (function () {
         row = record.rowArray.slice(0, plan.width);
       } else {
         row = currentRows[index].slice();
-        Object.keys(record.values || {}).forEach(function (header) {
+        const normalizedKeys = Object.create(null);
+        Object.keys(record.values || {}).forEach(function (rawHeader) {
+          const header = logicalHeader_(rawHeader);
+          if (!header) throw new Error('Boş Veriler başlığı yazılamaz.');
+          if (normalizedKeys[header]) {
+            throw new Error('Aynı kanonik Veriler başlığı iki kez yazılamaz: ' + header);
+          }
+          normalizedKeys[header] = true;
           const column = plan.map[header];
-          if (!column) throw new Error('Bilinmeyen Veriler başlığı: ' + header);
-          row[column - 1] = record.values[header];
+          if (!column) throw new Error('Bilinmeyen Veriler başlığı: ' + rawHeader + ' -> ' + header);
+          row[column - 1] = record.values[rawHeader];
         });
       }
 
