@@ -25,6 +25,7 @@ EXTRA_CANDIDATES = {
     "XUSIN": ["XUSIN.IS", "^XUSIN"],
 }
 RESOLUTIONS: dict[str, dict[str, object]] = {}
+FRAMES: dict[str, tuple[str, pd.DataFrame]] = {}
 FAILURES: list[dict[str, object]] = []
 _original_download_index = pipeline.download_index
 _original_event_records = pipeline.event_records
@@ -41,15 +42,28 @@ def _failure(requested: str, candidates: list[str], error: Exception) -> None:
     })
 
 
+def _quick_download(name: str) -> tuple[str, pd.DataFrame]:
+    errors: list[str] = []
+    for ticker in pipeline.INDEX_CANDIDATES.get(name, []):
+        try:
+            return ticker, pipeline.download(ticker, attempts=1)
+        except Exception as exc:
+            errors.append(f"{ticker}: {exc}")
+    raise RuntimeError(f"{name} unavailable: {' | '.join(errors)}")
+
+
 def resilient_download_index(name: str):
     pipeline.INDEX_CANDIDATES.update(EXTRA_CANDIDATES)
+    if name in FRAMES:
+        return FRAMES[name]
     try:
-        ticker, frame = _original_download_index(name)
+        result = _original_download_index(name) if name == "BIST100" else _quick_download(name)
+        FRAMES[name] = result
         RESOLUTIONS[name] = {
-            "requested": name, "used": name, "ticker": ticker,
+            "requested": name, "used": name, "ticker": result[0],
             "available": True, "fallback_level": 0,
         }
-        return ticker, frame
+        return result
     except Exception as primary:
         candidates = list(pipeline.INDEX_CANDIDATES.get(name, []))
         _failure(name, candidates, primary)
@@ -57,12 +71,16 @@ def resilient_download_index(name: str):
             raise
         for level, fallback in enumerate(FALLBACKS.get(name, ["BIST100"]), 1):
             try:
-                ticker, frame = _original_download_index(fallback)
+                if fallback == "BIST100" and "BIST100" in FRAMES:
+                    result = FRAMES["BIST100"]
+                else:
+                    result = _quick_download(fallback)
+                    FRAMES[fallback] = result
                 RESOLUTIONS[name] = {
-                    "requested": name, "used": fallback, "ticker": ticker,
+                    "requested": name, "used": fallback, "ticker": result[0],
                     "available": False, "fallback_level": level,
                 }
-                return ticker, frame
+                return result
             except Exception as exc:
                 _failure(f"{name}->{fallback}", list(pipeline.INDEX_CANDIDATES.get(fallback, [])), exc)
         raise RuntimeError(f"No legal market benchmark fallback available for {name}") from primary
