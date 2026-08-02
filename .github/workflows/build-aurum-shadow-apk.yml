@@ -6,6 +6,8 @@ on:
   pull_request:
     paths:
       - "android-app/**"
+      - "apps-script/**"
+      - "docs/**"
       - ".github/workflows/build-aurum-shadow-apk.yml"
   workflow_dispatch:
 
@@ -32,6 +34,58 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Embed tracked repository filesystem
+        run: |
+          python3 - <<'PY'
+          import json, os, shutil, subprocess
+          from pathlib import Path
+
+          root = Path.cwd()
+          dest = root / 'android-app/app/src/main/assets/repository'
+          if dest.exists():
+              shutil.rmtree(dest)
+          dest.mkdir(parents=True)
+
+          raw = subprocess.check_output(['git', 'ls-files', '-z'])
+          paths = [p.decode('utf-8') for p in raw.split(b'\0') if p]
+          excluded_prefixes = (
+              'android-app/app/build/',
+              'android-app/.gradle/',
+              'android-app/app/src/main/assets/repository/',
+          )
+          excluded_suffixes = ('.apk', '.aab', '.jks', '.keystore')
+          text_ext = {
+              '.gs','.js','.json','.md','.txt','.yml','.yaml','.xml','.gradle',
+              '.properties','.java','.kt','.html','.css','.csv','.ts','.tsx',
+              '.jsx','.py','.sh','.sql','.toml','.ini','.cfg'
+          }
+          catalog = []
+          for rel in paths:
+              if rel.startswith(excluded_prefixes) or rel.endswith(excluded_suffixes):
+                  continue
+              src = root / rel
+              if not src.is_file():
+                  continue
+              target = dest / rel
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(src, target)
+              size = src.stat().st_size
+              catalog.append({
+                  'path': rel,
+                  'size': size,
+                  'text': src.suffix.lower() in text_ext or src.name in {'README','LICENSE'}
+              })
+
+          catalog.sort(key=lambda x: x['path'].lower())
+          (dest / 'catalog.json').write_text(json.dumps({
+              'repository': 'netadalet-oss/bist-ai-top20',
+              'commit': os.environ.get('GITHUB_SHA',''),
+              'sourceLock': '5fbe5a2df9ec7a28f8e8b87d4648a8f1f0826dd2',
+              'fileCount': len(catalog),
+              'files': catalog
+          }, ensure_ascii=False), encoding='utf-8')
+          print(f'Embedded {len(catalog)} tracked files')
+          PY
       - name: Generate release signing key
         run: |
           keytool -genkeypair -v \
@@ -54,14 +108,14 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee android-app/package-report.txt
           grep -q "package: name='com.aurum.shadowt20'" android-app/package-report.txt
           sha256sum "$APK" | tee android-app/apk-sha256.txt
-          cp "$APK" android-app/Aurum-Top20-Shadow-standalone-signed.apk
+          cp "$APK" android-app/Aurum-Top20-Repository-standalone-signed.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Aurum-Top20-Shadow-signed
+          name: Aurum-Top20-Repository-signed
           if-no-files-found: error
           retention-days: 30
           path: |
-            android-app/Aurum-Top20-Shadow-standalone-signed.apk
+            android-app/Aurum-Top20-Repository-standalone-signed.apk
             android-app/aurum-shadow-release.jks
             android-app/signature-report.txt
             android-app/package-report.txt
