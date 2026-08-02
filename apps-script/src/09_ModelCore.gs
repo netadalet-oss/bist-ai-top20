@@ -11,7 +11,9 @@ var MODEL_CORE = (function () {
   'use strict';
 
   function finite_(value) {
-    return value != null && Number.isFinite(Number(value));
+    if (value == null) return false;
+    if (typeof value === 'string' && value.trim() === '') return false;
+    return Number.isFinite(Number(value));
   }
 
   function quantile_(values, q) {
@@ -83,7 +85,7 @@ var MODEL_CORE = (function () {
   function result(model, row, scoreInfo, raw, normalized, tieBreak, reason) {
     return {
       model: model,
-      modelVersion: '2.0.0',
+      modelVersion: '2.0.1',
       symbol: row.sym || row.Hisse || row.symbol,
       featureTs: row.verizamani || row.VeriZamani || null,
       score: scoreInfo == null ? null : Number((scoreInfo.value * 100).toFixed(6)),
