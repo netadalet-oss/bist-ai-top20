@@ -4,13 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bist-behavior-dna"
-version = "0.1.0"
-description = "Reproducible BIST market behavior data collection and feature foundation"
+version = "0.2.0"
+description = "Reproducible BIST market behavior collection, event detection, scoring, analysis, and Excel reporting"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "netadalet-oss"}]
 dependencies = [
+  "numpy>=1.26,<3",
+  "openpyxl>=3.1,<4",
   "pandas>=2.2,<3",
   "pyarrow>=17,<20",
   "pydantic>=2.8,<3",
