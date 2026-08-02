@@ -1,14 +1,13 @@
 package com.aurum.shadowt20;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONObject;
 
@@ -22,7 +21,7 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class MainActivity extends AppCompatActivity {
+public final class MainActivity extends Activity {
     private WebView webView;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
