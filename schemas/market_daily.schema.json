@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/netadalet-oss/bist-ai-top20/schemas/market_daily.schema.json",
+  "title": "BIST Behavior DNA Daily Market Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trade_date", "symbol", "provider_symbol", "open", "high", "low", "close",
+    "volume", "provider", "collected_at_utc", "validation_status"
+  ],
+  "properties": {
+    "trade_date": {"type": "string", "format": "date"},
+    "symbol": {"type": "string", "pattern": "^[A-Z0-9]+$"},
+    "provider_symbol": {"type": "string"},
+    "open": {"type": "number", "exclusiveMinimum": 0},
+    "high": {"type": "number", "exclusiveMinimum": 0},
+    "low": {"type": "number", "exclusiveMinimum": 0},
+    "close": {"type": "number", "exclusiveMinimum": 0},
+    "adj_close": {"type": ["number", "null"]},
+    "volume": {"type": "integer", "minimum": 0},
+    "dividends": {"type": ["number", "null"]},
+    "stock_splits": {"type": ["number", "null"]},
+    "provider": {"type": "string", "minLength": 1},
+    "collected_at_utc": {"type": "string", "format": "date-time"},
+    "validation_status": {"enum": ["unchecked", "valid", "warning", "invalid"]}
+  }
+}
