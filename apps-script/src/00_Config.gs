@@ -2,7 +2,7 @@
  * Merkezi yapılandırma.
  * Aynı ayarın birden fazla PropertiesService anahtarıyla tutulmasını önler.
  */
-const APP_CONFIG = Object.freeze({
+var APP_CONFIG = Object.freeze({
   SHEET_NAME: 'Veriler',
   TIMEZONE: 'Europe/Istanbul',
   MONTHS_BACK: 14,
@@ -26,7 +26,10 @@ const APP_CONFIG = Object.freeze({
   })
 });
 
-const DEFAULT_BASE_URL =
+/* Canonical public configuration name expected by runtime integrity checks. */
+var BIST_CONFIG = APP_CONFIG;
+
+var DEFAULT_BASE_URL =
   'https://www.isyatirim.com.tr/_layouts/15/Isyatirim.Website/Common/Data.aspx/HisseTekil?hisse=';
 
 function appProps_() {
