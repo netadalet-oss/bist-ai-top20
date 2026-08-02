@@ -7,7 +7,7 @@
 var LEGACY_FUNCTION_MIGRATION_AUDIT = (function () {
   'use strict';
 
-  const VERSION = 'LEGACY-FUNCTION-MIGRATION-1.0.0';
+  const VERSION = 'LEGACY-FUNCTION-MIGRATION-1.0.1';
   const LEGACY_SOURCE_SHA256 = 'c380b93c4804533e866e79bdd36b44683afbbb973a318e0716862ce7b0dbaa0a';
 
   const DUPLICATE_DECLARATIONS = Object.freeze([
@@ -51,11 +51,11 @@ var LEGACY_FUNCTION_MIGRATION_AUDIT = (function () {
     { legacy:'S criteria race', replacement:'S_SELECTION_ENGINE and runtime binding', status:'REPLACED', module:'16_SSelectionEngine.gs, 20_RuntimeModelBinding.gs' }
   ]);
 
-  // These names must not be present in the modular deployment. Their presence
-  // strongly indicates that the full legacy monolith was loaded alongside the
-  // modular files, allowing later declarations to override one another.
+  // Only names that must not exist in the modular deployment are listed here.
+  // getBaseUrl_ is intentionally omitted because 00_Config.gs provides the
+  // canonical modular implementation under the same global name.
   const FORBIDDEN_COLOADED_GLOBALS = Object.freeze([
-    'buildQueuesByVeriZamani_', 'getBaseUrl_', 'menu_DurdurVeTemizle',
+    'buildQueuesByVeriZamani_', 'menu_DurdurVeTemizle',
     'readRow_', 'rowForSymbolIndex_', 'yenile_'
   ]);
 
