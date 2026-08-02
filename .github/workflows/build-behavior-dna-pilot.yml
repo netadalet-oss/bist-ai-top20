@@ -25,8 +25,6 @@ on:
 permissions:
   contents: read
 
-actions:
-
 concurrency:
   group: behavior-dna-pilot-${{ github.ref }}
   cancel-in-progress: true
@@ -45,13 +43,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: behavior-dna
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-
       - name: Restore verified Yahoo cache
         uses: actions/cache@v4
         with:
@@ -59,18 +55,14 @@ jobs:
           key: behavior-dna-yahoo-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             behavior-dna-yahoo-${{ runner.os }}-
-
       - name: Install project
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
-
       - name: Run tests
         run: pytest -q
-
       - name: Build 100-behavior real-data database
         run: python scripts/run_pilot_behavior_dna_resilient.py
-
       - name: Validate acceptance criteria
         run: |
           test -s artifacts/behavior_dna/behavior_dna.parquet
@@ -83,7 +75,6 @@ jobs:
           from pathlib import Path
           import openpyxl
           import pandas as pd
-
           root = Path('artifacts/behavior_dna')
           report = json.loads((root / 'run_report.json').read_text())
           assert report['stock_count'] >= 10, report
@@ -104,7 +95,6 @@ jobs:
           assert (root / 'BehaviorDNA.xlsx').stat().st_size > 10000
           print(json.dumps(report, indent=2, ensure_ascii=False))
           PY
-
       - name: Upload Behavior DNA deliverables
         uses: actions/upload-artifact@v4
         with:
@@ -125,7 +115,6 @@ jobs:
             artifacts/behavior_dna/SHA256SUMS.xlsx
           if-no-files-found: error
           retention-days: 30
-
       - name: Upload failure logs and partial raw cache
         if: failure()
         uses: actions/upload-artifact@v4
