@@ -9,6 +9,16 @@ var SHADOW_COMPARISON = (function () {
     'legacySymbolsJson','newSymbolsJson','legacyOnlyJson','newOnlyJson','rankDiffJson','status','message'
   ];
 
+  function header_(value) {
+    if (typeof normalizeHeader_ === 'function') return normalizeHeader_(value);
+    return String(value == null ? '' : value)
+      .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/[\r\n]+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function ensure_() {
     const ss = SpreadsheetApp.getActive();
     let sh = ss.getSheetByName(SHEET);
@@ -45,7 +55,7 @@ var SHADOW_COMPARISON = (function () {
     const sh = ss.getSheetByName(sheetName);
     if (!sh || sh.getLastRow() < 2) return [];
     const width = Math.max(1, sh.getLastColumn());
-    const headers = sh.getRange(1,1,1,width).getValues()[0].map(function(v){ return String(v || '').trim(); });
+    const headers = sh.getRange(1,1,1,width).getValues()[0].map(header_);
     const symbolIndex = headers.findIndex(function(h){ return ['Hisse','Sembol','Symbol'].indexOf(h) >= 0; });
     const rankIndex = headers.findIndex(function(h){ return ['Sıra','Sira','Rank'].indexOf(h) >= 0; });
     if (symbolIndex < 0) throw new Error('Legacy S sayfasında hisse başlığı bulunamadı.');
