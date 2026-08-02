@@ -2,7 +2,7 @@
 var RUN_LOG_QUALITY_INTEGRATION = (function () {
   'use strict';
 
-  const VERSION = 'RUN-LOG-QUALITY-1.0.0';
+  const VERSION = 'RUN-LOG-QUALITY-1.0.1';
   const MAX_JSON_LENGTH = 45000;
 
   function text_(value) {
@@ -74,6 +74,6 @@ var RUN_LOG_QUALITY_INTEGRATION = (function () {
   return Object.freeze({
     version: VERSION,
     fromError: fromError,
-    safeJson: safeJson
+    safeJson: safeJson_
   });
 })();
