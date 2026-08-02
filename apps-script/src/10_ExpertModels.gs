@@ -5,12 +5,29 @@
 var EXPERT_MODELS = (function () {
   'use strict';
 
+  const VERSION = 'EXPERT-MODELS-2.1.0';
+
+  function valueAtPath_(row, path) {
+    if (!row || path == null) return null;
+    const parts = String(path).split('.');
+    let value = row;
+    for (let i = 0; i < parts.length; i++) {
+      if (value == null || typeof value !== 'object' || !(parts[i] in value)) return null;
+      value = value[parts[i]];
+    }
+    return value;
+  }
+
   function n_(row, names) {
     for (let i = 0; i < names.length; i++) {
-      const value = row[names[i]];
+      const value = valueAtPath_(row, names[i]);
       if (MODEL_CORE.finite(value)) return Number(value);
     }
     return null;
+  }
+
+  function clamp_(value, low, high) {
+    return Math.max(low, Math.min(high, value));
   }
 
   function batchMetric_(rows, getter, options) {
@@ -35,7 +52,8 @@ var EXPERT_MODELS = (function () {
     const volCh = batchMetric_(rows, function (o) { return n_(o,['hacimdeg','hacimdeg_T','latest.hacimDeg']); });
     const near = batchMetric_(rows, function (o) {
       const u=n_(o,['bollu','Boll_Ust']), l=n_(o,['bolla','Boll_Alt']), c=n_(o,['kapanis_T','latest.kapanis']);
-      return u!=null&&l!=null&&c!=null&&u!==l?(c-l)/Math.abs(u-l):null;
+      if (u==null || l==null || c==null || u===l) return null;
+      return clamp_((c-l)/Math.abs(u-l), 0, 1);
     }, {invert:true});
     const rsi = batchMetric_(rows, function (o) { const v=n_(o,['rsi14','RSI14']); return v==null?null:Math.abs(v-50); }, {invert:true});
     const mom3 = batchMetric_(rows, function (o) { return n_(o,['deg3g_num','Degisim3GunNum']); });
@@ -43,7 +61,7 @@ var EXPERT_MODELS = (function () {
     const priceFlag = batchMetric_(rows, function (o) {
       const a=n_(o,['deg3g_num']), b=n_(o,['anlikdeg','AnlikDegisim']); if(a==null&&b==null)return null; return (a>0?1:0)+(b>0?1:0);
     });
-    const volumeFlag = batchMetric_(rows, function (o) { const v=n_(o,['hacimdeg','hacimdeg_T']); return v==null?null:(v>0?1:0); });
+    const volumeFlag = batchMetric_(rows, function (o) { const v=n_(o,['hacimdeg','hacimdeg_T','latest.hacimDeg']); return v==null?null:(v>0?1:0); });
 
     const out = rows.map(function (row,i) {
       const volInfo=MODEL_CORE.weightedValue({v5:v5.score[i],r1:r1.score[i],v21:v21.score[i],r2:r2.score[i],v63:v63.score[i]}, {v5:.35,r1:.35,v21:.15,r2:.10,v63:.05}, .5);
@@ -113,17 +131,21 @@ var EXPERT_MODELS = (function () {
     const r1=batchMetric_(rows,function(o){return n_(o,['getiri1A','Getiri_TL_1A','Getiri_TL_1A_T0']);});
     const r3=batchMetric_(rows,function(o){return n_(o,['getiri3A','Getiri_TL_3A','Getiri_TL_3A_T0']);});
     const r6=batchMetric_(rows,function(o){return n_(o,['getiri6A','Getiri_TL_6A','Getiri_TL_6A_T0']);});
-    const stability=batchMetric_(rows,function(o){const v=n_(o,['vol21','Volatilite21G']),g=n_(o,['getiri1A','Getiri_TL_1A','Getiri_TL_1A_T0']);return v!=null&&g!=null&&g!==0?v/Math.abs(g):null;},{invert:true});
+    const stability=batchMetric_(rows,function(o){
+      const v=n_(o,['vol21','Volatilite21G']);
+      const g=n_(o,['getiri1A','Getiri_TL_1A','Getiri_TL_1A_T0']);
+      return v!=null && g!=null && g>0 ? v/g : null;
+    },{invert:true});
     const mom=batchMetric_(rows,function(o){return n_(o,['deg3g_num']);});
     const rsi=batchMetric_(rows,function(o){const v=n_(o,['rsi14','RSI14']);return v==null?null:Math.abs(v-55);},{invert:true});
     const out=rows.map(function(row,i){
       const horizons=MODEL_CORE.weightedValue({r1:r1.score[i],r3:r3.score[i],r6:r6.score[i]}, {r1:1,r3:1,r6:1}, .66);
       const short=MODEL_CORE.weightedValue({mom:mom.score[i],rsi:rsi.score[i]}, {mom:.5,rsi:.5}, .5);
       const total=MODEL_CORE.weightedValue({horizons:horizons&&horizons.value,stability:stability.score[i],short:short&&short.value}, {horizons:.45,stability:.30,short:.25}, .7);
-      return MODEL_CORE.result('K4',row,total,{return1M:r1.raw[i],return3M:r3.raw[i],return6M:r6.raw[i],stability:stability.raw[i],momentum3d:mom.raw[i],rsiDistance55:rsi.raw[i]}, {horizons:horizons&&horizons.value,stability:stability.score[i],short:short&&short.value}, {return6M:r6.score[i],stability:stability.score[i]}, 'Çoklu zaman dilimi liderlik ve pozitif kalma');
+      return MODEL_CORE.result('K4',row,total,{return1M:r1.raw[i],return3M:r3.raw[i],return6M:r6.raw[i],positiveReturnRiskRatio:stability.raw[i],momentum3d:mom.raw[i],rsiDistance55:rsi.raw[i]}, {horizons:horizons&&horizons.value,stability:stability.score[i],short:short&&short.value}, {return6M:r6.score[i],stability:stability.score[i]}, 'Çoklu zaman dilimi liderlik ve pozitif kalma');
     });
     return MODEL_CORE.rankResults(out.filter(function(x){return x.eligible;}),['return6M','stability']);
   }
 
-  return Object.freeze({K1:K1,K2:K2,K3:K3,K4:K4});
+  return Object.freeze({version:VERSION,K1:K1,K2:K2,K3:K3,K4:K4});
 })();
