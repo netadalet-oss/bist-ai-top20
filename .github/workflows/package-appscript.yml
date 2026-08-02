@@ -1,0 +1,82 @@
+name: Package Apps Script
+
+on:
+  push:
+    branches:
+      - refactor/apps-script-foundation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Apps Script packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="Aurum_BIST_Top20_AppsScript"
+          mkdir -p "$ROOT/moduler" "$ROOT/alternatif-tek-dosya"
+
+          mapfile -t GS_FILES < <(find apps-script/src -maxdepth 1 -type f -name '*.gs' | sort)
+          test "${#GS_FILES[@]}" -eq 43
+
+          cp "${GS_FILES[@]}" "$ROOT/moduler/"
+
+          cat > "$ROOT/moduler/appsscript.json" <<'JSON'
+          {
+            "timeZone": "Europe/Istanbul",
+            "dependencies": {},
+            "exceptionLogging": "STACKDRIVER",
+            "runtimeVersion": "V8"
+          }
+          JSON
+
+          : > "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
+          for f in "${GS_FILES[@]}"; do
+            printf '\n/* ==========================================================================\n * SOURCE: %s\n * ========================================================================== */\n\n' "$(basename "$f")" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
+            cat "$f" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
+            printf '\n' >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
+          done
+          cp "$ROOT/moduler/appsscript.json" "$ROOT/alternatif-tek-dosya/appsscript.json"
+
+          cat > "$ROOT/KURULUM.txt" <<'TXT'
+          AURUM BIST TOP 20 - GOOGLE APPS SCRIPT PAKETI
+
+          1) ÖNERİLEN KURULUM: moduler klasöründeki 43 adet .gs dosyasını ve appsscript.json dosyasını kullanın.
+          2) alternatif-tek-dosya klasörü yalnız tüm kodu tek .gs dosyasında kullanmak isteyenler içindir.
+          3) Modüler dosyalar ile tek-dosya alternatifini aynı Apps Script projesine birlikte yüklemeyin.
+          4) Legacy V_141225 monolit kodunu bu modüllerle aynı projeye eklemeyin; global fonksiyon çakışması oluşur.
+          5) Google Apps Script arayüzü ZIP'i doğrudan içe aktarmadığından toplu aktarım için clasp kullanılması önerilir:
+
+             npm install -g @google/clasp
+             clasp login
+             clasp clone <SCRIPT_ID>
+
+             Ardından moduler klasöründeki dosyaları clone edilen proje klasörüne kopyalayın ve:
+
+             clasp push
+
+          6) Yükleme sonrasında önce bütünlük ve regresyon testlerini çalıştırın.
+          7) Üretim kullanımından önce sistem SHADOW-ONLY modunda doğrulanmalıdır.
+          TXT
+
+          (
+            cd "$ROOT"
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+
+          zip -r Aurum_BIST_Top20_AppsScript_Final.zip "$ROOT"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurum_BIST_Top20_AppsScript_Final
+          path: Aurum_BIST_Top20_AppsScript_Final.zip
+          if-no-files-found: error
+          retention-days: 30
