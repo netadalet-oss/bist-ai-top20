@@ -1,0 +1,29 @@
+provider: yfinance
+start_date: 2015-01-01
+end_date: null
+output_path: data/raw/market_daily.parquet
+output_format: parquet
+benchmark: XU100
+symbols:
+  - AKBNK
+  - ASELS
+  - BIMAS
+  - EREGL
+  - FROTO
+  - GARAN
+  - ISCTR
+  - KCHOL
+  - KOZAL
+  - PETKM
+  - PGSUS
+  - SAHOL
+  - SASA
+  - SISE
+  - TAVHL
+  - TCELL
+  - THYAO
+  - TOASO
+  - TUPRS
+  - YKBNK
+retry_count: 3
+request_pause_seconds: 0.5

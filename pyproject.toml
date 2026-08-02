@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bist-behavior-dna"
+version = "0.1.0"
+description = "Reproducible BIST market behavior data collection and feature foundation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "netadalet-oss"}]
+dependencies = [
+  "pandas>=2.2,<3",
+  "pyarrow>=17,<20",
+  "pydantic>=2.8,<3",
+  "PyYAML>=6.0,<7",
+  "typer>=0.12,<1",
+  "yfinance>=0.2.40,<1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<9",
+  "ruff>=0.6,<1",
+  "mypy>=1.11,<2",
+  "pandas-stubs>=2.2"
+]
+
+[project.scripts]
+behavior-dna = "bist_behavior_dna.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bist_behavior_dna"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["bist_behavior_dna"]
