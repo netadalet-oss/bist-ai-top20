@@ -2,7 +2,7 @@
 var SCHEDULER_AND_MAINTENANCE = (function () {
   'use strict';
 
-  const VERSION = 'SCHED-MAINT-1.1.0';
+  const VERSION = 'SCHED-MAINT-1.2.0';
   const TZ = 'Europe/Istanbul';
   const RUN_LOG_SHEET = '_RunLog';
   const LEGACY_RUN_LOG_HEADERS = Object.freeze([
@@ -94,14 +94,83 @@ var SCHEDULER_AND_MAINTENANCE = (function () {
     try { return fn(); } finally { lock.releaseLock(); }
   }
 
+  function preflightIntegrity_(options) {
+    const opts = options || {};
+    if (opts.enabled === false) {
+      return {
+        valid:true,
+        bypassed:true,
+        bypassReason:String(opts.bypassReason || 'EXPLICITLY_DISABLED')
+      };
+    }
+
+    const auditor = opts.audit || (
+      typeof APPS_SCRIPT_INTEGRITY_AUDIT !== 'undefined'
+        ? APPS_SCRIPT_INTEGRITY_AUDIT
+        : null
+    );
+    if (!auditor || typeof auditor.assertValid !== 'function') {
+      const error = new Error('Apps Script bütünlük denetleyicisi tanımlı değil.');
+      error.name = 'AppsScriptIntegrityError';
+      error.integrityReport = {
+        valid:false,
+        missingSymbols:['APPS_SCRIPT_INTEGRITY_AUDIT'],
+        missingMethods:['APPS_SCRIPT_INTEGRITY_AUDIT.assertValid'],
+        brokenRuntimeChain:[]
+      };
+      throw error;
+    }
+    return auditor.assertValid(opts.auditOptions || {});
+  }
+
+  function safeJson_(value) {
+    if (typeof RUN_LOG_QUALITY_INTEGRATION !== 'undefined' && RUN_LOG_QUALITY_INTEGRATION.safeJson) {
+      return RUN_LOG_QUALITY_INTEGRATION.safeJson(value);
+    }
+    try { return JSON.stringify(value == null ? null : value); }
+    catch (err) { return JSON.stringify({ serializationError:String(err && err.message || err) }); }
+  }
+
+  function integrityDetails_(err) {
+    const report = err && err.integrityReport && typeof err.integrityReport === 'object'
+      ? err.integrityReport
+      : null;
+    if (!report && String(err && err.name || '') !== 'AppsScriptIntegrityError') return null;
+    const symbols = (report && report.missingSymbols) || [];
+    const methods = (report && report.missingMethods) || [];
+    const chain = (report && report.brokenRuntimeChain) || [];
+    return {
+      errorType:String(err && err.name || 'AppsScriptIntegrityError'),
+      reasonCodes:['INTEGRITY_CHECK_FAILED'].concat(
+        symbols.length ? ['MISSING_SYMBOLS'] : [],
+        methods.length ? ['MISSING_METHODS'] : [],
+        chain.length ? ['BROKEN_RUNTIME_CHAIN'] : []
+      ).join(','),
+      qualityModels:'',
+      qualityFields:symbols.concat(methods, chain).join(','),
+      qualityReportJson:safeJson_(report),
+      isIntegrityFailure:true,
+      isQualityFailure:false
+    };
+  }
+
   function failureDetails_(err) {
+    const integrity = integrityDetails_(err);
+    if (integrity) return integrity;
     if (typeof RUN_LOG_QUALITY_INTEGRATION !== 'undefined' && RUN_LOG_QUALITY_INTEGRATION.fromError) {
       return RUN_LOG_QUALITY_INTEGRATION.fromError(err);
     }
     return {
-      errorType: String(err && err.name || 'Error'),
-      reasonCodes: '', qualityModels: '', qualityFields: '', qualityReportJson: ''
+      errorType:String(err && err.name || 'Error'),
+      reasonCodes:'', qualityModels:'', qualityFields:'', qualityReportJson:'',
+      isIntegrityFailure:false, isQualityFailure:false
     };
+  }
+
+  function failureStatus_(details) {
+    if (details && details.isIntegrityFailure) return 'FAILED_INTEGRITY';
+    if (details && details.isQualityFailure) return 'FAILED_DATA_QUALITY';
+    return 'FAILED';
   }
 
   function runSession(input) {
@@ -130,6 +199,7 @@ var SCHEDULER_AND_MAINTENANCE = (function () {
       }
 
       try {
+        const integrity = preflightIntegrity_(input.integrityOptions || {});
         if (typeof buildRuntimeInputs_ !== 'function') throw new Error('buildRuntimeInputs_ adaptörü tanımlı değil.');
         const runtimeInput = buildRuntimeInputs_({
           predictionTs:now,
@@ -137,6 +207,7 @@ var SCHEDULER_AND_MAINTENANCE = (function () {
           sessionKind:session.sessionKind,
           qualityOptions:input.qualityOptions || {}
         });
+        runtimeInput.integrity = integrity;
         const saved = saveRuntimeSSelectionSnapshot_(Object.assign({}, runtimeInput, {
           predictionTs:now,
           horizon:session.horizon,
@@ -155,7 +226,7 @@ var SCHEDULER_AND_MAINTENANCE = (function () {
         const details = failureDetails_(err);
         appendRun_({ runId:runId, runTs:now.toISOString(), tradingDate:tradingDate,
           sessionKind:session.sessionKind, horizon:session.horizon,
-          status:details.isQualityFailure ? 'FAILED_DATA_QUALITY' : 'FAILED', rowCount:0,
+          status:failureStatus_(details), rowCount:0,
           message:String(err && err.stack || err), durationMs:Date.now()-started,
           errorType:details.errorType, reasonCodes:details.reasonCodes,
           qualityModels:details.qualityModels, qualityFields:details.qualityFields,
@@ -204,6 +275,7 @@ var SCHEDULER_AND_MAINTENANCE = (function () {
     const names = ss.getSheets().map(function (s) { return s.getName(); });
     const required = ['Veriler','_Snapshots','_SnapshotOutcomes','_ModelRegistry','_RunLog'];
     return { timestamp:new Date().toISOString(), missingSheets:required.filter(function (n) { return names.indexOf(n) < 0; }),
+      integrity:typeof auditAppsScriptIntegrity_ === 'function' ? auditAppsScriptIntegrity_() : null,
       triggerAudit:audit(),
       veriler:typeof auditVerilerRepository_ === 'function' ? auditVerilerRepository_() : null,
       runtimeBinding:typeof auditRuntimeModelBinding_ === 'function' ? auditRuntimeModelBinding_({ strict:false }) : null };
@@ -230,7 +302,8 @@ var SCHEDULER_AND_MAINTENANCE = (function () {
   return Object.freeze({ version:VERSION, sessions:SESSIONS, runLogHeaders:RUN_LOG_HEADERS,
     runSession:runSession, installTriggers:installTriggers, removeTriggers:removeTriggers,
     audit:audit, maintenanceAudit:maintenanceAudit, cleanupRunLog:cleanupRunLog,
-    isTradingDay:isTradingDay_, ensureRunLog:ensureRunLog_ });
+    isTradingDay:isTradingDay_, ensureRunLog:ensureRunLog_,
+    preflightIntegrity:preflightIntegrity_, failureDetails:failureDetails_, failureStatus:failureStatus_ });
 })();
 
 function scheduledSameDayEarlySnapshot_() { return SCHEDULER_AND_MAINTENANCE.runSession({ session:SCHEDULER_AND_MAINTENANCE.sessions.SAME_DAY_EARLY }); }
