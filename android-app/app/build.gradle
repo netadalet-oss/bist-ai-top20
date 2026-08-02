@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.aurum.shadowt20'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.aurum.shadowt20'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0-shadow'
+    }
+
+    signingConfigs {
+        release {
+            def keyPath = System.getenv('AURUM_KEYSTORE_PATH')
+            if (keyPath) {
+                storeFile file(keyPath)
+                storePassword System.getenv('AURUM_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('AURUM_KEY_ALIAS')
+                keyPassword System.getenv('AURUM_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
