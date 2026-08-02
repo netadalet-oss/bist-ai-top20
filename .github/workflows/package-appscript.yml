@@ -1,0 +1,82 @@
+name: Package Apps Script
+
+on:
+  push:
+    branches:
+      - refactor/apps-script-foundation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Apps Script packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="Aurum_BIST_Top20_AppsScript"
+          mkdir -p "$ROOT/moduler" "$ROOT/alternatif-tek-dosya"
+
+          mapfile -t SRC_FILES < <(find apps-script/src -maxdepth 1 -type f -name '*.gs' | sort)
+          mapfile -t TEST_FILES < <(find apps-script/tests -maxdepth 1 -type f -name '*.gs' | sort)
+          test "${#SRC_FILES[@]}" -gt 0
+          test "${#TEST_FILES[@]}" -gt 0
+
+          printf '%s\n' "${#SRC_FILES[@]} production .gs modules" > "$ROOT/MODULE_COUNT.txt"
+          printf '%s\n' "${#TEST_FILES[@]} test .gs modules" >> "$ROOT/MODULE_COUNT.txt"
+
+          cp "${SRC_FILES[@]}" "$ROOT/moduler/"
+          cp "${TEST_FILES[@]}" "$ROOT/moduler/"
+
+          cat > "$ROOT/moduler/appsscript.json" <<'JSON'
+          {
+            "timeZone": "Europe/Istanbul",
+            "dependencies": {},
+            "exceptionLogging": "STACKDRIVER",
+            "runtimeVersion": "V8"
+          }
+          JSON
+
+          : > "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+          for f in "${SRC_FILES[@]}" "${TEST_FILES[@]}"; do
+            printf '\n/* ==========================================================================\n * SOURCE: %s\n * ========================================================================== */\n\n' "$(basename "$f")" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+            cat "$f" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+            printf '\n' >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+          done
+          cp "$ROOT/moduler/appsscript.json" "$ROOT/alternatif-tek-dosya/appsscript.json"
+
+          cat > "$ROOT/KURULUM.txt" <<'TXT'
+          AURUM BIST TOP 20 - GOOGLE APPS SCRIPT PAKETI
+
+          1) moduler klasörü hem üretim .gs dosyalarını hem de test .gs dosyalarını içerir.
+          2) Mevcut Apps Script projesine bu klasördeki tüm .gs dosyalarını ve appsscript.json dosyasını aktarın.
+          3) alternatif-tek-dosya klasörü yalnız bütün kodu tek .gs dosyasında kullanmak isteyenler içindir.
+          4) Modüler dosyalar ile tek-dosya alternatifini aynı projeye birlikte yüklemeyin.
+          5) Legacy V_141225 monolit kodunu bu modüllerle aynı projeye eklemeyin.
+          6) Toplu aktarım için clasp kullanın ve ardından runAllProjectTests_ çalıştırın.
+          7) Üretim kullanımından önce sistem SHADOW-ONLY modunda doğrulanmalıdır.
+          TXT
+
+          (
+            cd "$ROOT"
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+
+          zip -r Aurum_BIST_Top20_AppsScript_With_Tests.zip "$ROOT"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurum_BIST_Top20_AppsScript_With_Tests
+          path: Aurum_BIST_Top20_AppsScript_With_Tests.zip
+          if-no-files-found: error
+          retention-days: 30

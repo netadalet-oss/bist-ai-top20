@@ -1,0 +1,76 @@
+name: Deploy Apps Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force push even when clasp detects remote differences"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-apps-script
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: apps-script-production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate required secrets
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          test -n "$APPS_SCRIPT_ID" || { echo "APPS_SCRIPT_ID secret is missing"; exit 1; }
+          test -n "$CLASPRC_JSON" || { echo "CLASPRC_JSON secret is missing"; exit 1; }
+
+      - name: Install clasp
+        run: npm install --global @google/clasp@3
+
+      - name: Configure clasp
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          cat > .clasp.json <<EOF
+          {
+            "scriptId": "$APPS_SCRIPT_ID",
+            "rootDir": "apps-script/src"
+          }
+          EOF
+
+      - name: Verify source contract
+        run: |
+          test -f apps-script/src/00_Config.gs
+          test -f apps-script/src/42_ExpertCriteriaParityAudit.gs
+          test -f apps-script/src/appsscript.json
+          if find apps-script/src -maxdepth 1 -type f -name '*.gs' | grep -q '/legacy/'; then
+            echo "Legacy source must not be deployed"
+            exit 1
+          fi
+
+      - name: Show deployment status
+        run: clasp status
+
+      - name: Push source
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            clasp push --force
+          else
+            clasp push
+          fi
