@@ -7,7 +7,34 @@
 var RUNTIME_INPUT_ADAPTER = (function () {
   'use strict';
 
-  const VERSION = 'RUNTIME-INPUT-1.0.0';
+  const VERSION = 'RUNTIME-INPUT-1.1.0';
+
+  function normalizeHeaderLocal_(value) {
+    if (typeof normalizeHeader_ === 'function') return normalizeHeader_(value);
+    return String(value == null ? '' : value)
+      .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/[\r\n]+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function normalizeRecordKeys_(record) {
+    const normalized = {};
+    Object.keys(record || {}).forEach(function (rawKey) {
+      if (rawKey === '__rowNumber') {
+        normalized[rawKey] = record[rawKey];
+        return;
+      }
+      const key = normalizeHeaderLocal_(rawKey);
+      if (!key) return;
+      if (Object.prototype.hasOwnProperty.call(normalized, key) && normalized[key] !== record[rawKey]) {
+        throw new Error('Aynı kanonik runtime alanı birden fazla değer içeriyor: ' + key);
+      }
+      normalized[key] = record[rawKey];
+    });
+    return normalized;
+  }
 
   function finite_(value) {
     if (value === '' || value == null) return null;
@@ -19,10 +46,23 @@ var RUNTIME_INPUT_ADAPTER = (function () {
     return isFinite(n) ? n : null;
   }
 
+  function firstSeriesNumber_(value) {
+    const direct = finite_(value);
+    if (direct != null) return direct;
+    if (typeof value !== 'string') return null;
+    const parts = value.split(/[|;]/);
+    for (let i = 0; i < parts.length; i++) {
+      const parsed = finite_(parts[i].trim());
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
   function first_(record, names) {
     for (let i = 0; i < names.length; i++) {
-      if (Object.prototype.hasOwnProperty.call(record, names[i])) {
-        const value = record[names[i]];
+      const name = normalizeHeaderLocal_(names[i]);
+      if (Object.prototype.hasOwnProperty.call(record, name)) {
+        const value = record[name];
         if (value !== '' && value != null) return value;
       }
     }
@@ -31,6 +71,10 @@ var RUNTIME_INPUT_ADAPTER = (function () {
 
   function number_(record, names) {
     return finite_(first_(record, names));
+  }
+
+  function seriesNumber_(record, names) {
+    return firstSeriesNumber_(first_(record, names));
   }
 
   function date_(value) {
@@ -58,40 +102,41 @@ var RUNTIME_INPUT_ADAPTER = (function () {
 
   function toFeature(record, options) {
     const opts = options || {};
-    const symbol = String(first_(record, ['Hisse', 'symbol', 'sym']) || '').trim().toUpperCase();
+    const source = normalizeRecordKeys_(record || {});
+    const symbol = String(first_(source, ['Hisse', 'symbol', 'sym']) || '').trim().toUpperCase();
     if (!symbol) return null;
 
-    const featureTs = date_(first_(record, ['VeriZamani', 'Veri Zamanı', 'featureTs']));
+    const featureTs = date_(first_(source, ['VeriZamani', 'Veri Zamanı', 'featureTs']));
     const feature = {
       symbol: symbol,
       sym: symbol,
       featureTs: featureTs,
       verizamani: featureTs,
-      anlik: number_(record, ['Anlik', 'Anlık']),
-      anlikdeg: number_(record, ['AnlikDegisim%', 'AnlıkDeğişim%']),
-      anlikDegisimPct: number_(record, ['AnlikDegisim%', 'AnlıkDeğişim%']),
-      kapanis_T: number_(record, ['Kapanis_T0', 'Kapanış_T0']),
-      fiyatdeg_T: number_(record, ['FiyatDegisim%_T0', 'FiyatDeğişim%_T0']),
-      hacimdeg_T: number_(record, ['HacimDegisim%_T0', 'HacimDeğişim%_T0']),
-      hacimdeg: number_(record, ['HacimDegisim%_T0', 'HacimDeğişim%_T0']),
-      ema20: number_(record, ['EMA20']),
-      ema50: number_(record, ['EMA50']),
-      ema200: number_(record, ['EMA200']),
-      macdhist: number_(record, ['MACDHist', 'MACD_Hist']),
-      rsi14: number_(record, ['RSI14']),
-      momentum10: number_(record, ['Momentum10']),
-      vol5: number_(record, ['Volatilite5G', 'Volatilite_5G']),
-      vol21: number_(record, ['Volatilite21G', 'Volatilite_21G']),
-      vol63: number_(record, ['Volatilite63G', 'Volatilite_63G']),
-      volatilite21g: number_(record, ['Volatilite21G', 'Volatilite_21G']),
-      bollu: number_(record, ['Boll_Ust', 'Bollinger_Ust']),
-      bolla: number_(record, ['Boll_Alt', 'Bollinger_Alt']),
-      deg3g_num: number_(record, ['Degisim3GunNum', 'Değişim3GünNum', 'Degisim3Gun']),
-      getiri1A: number_(record, ['Getiri_TL_1A_T0', 'Getiri_TL_1A']),
-      getiri3A: number_(record, ['Getiri_TL_3A_T0', 'Getiri_TL_3A']),
-      getiri6A: number_(record, ['Getiri_TL_6A_T0', 'Getiri_TL_6A']),
-      history: history_(record, opts.historyDepth || 30),
-      raw: record
+      anlik: number_(source, ['Anlik', 'Anlık']),
+      anlikdeg: number_(source, ['AnlikDegisim%', 'AnlıkDeğişim%']),
+      anlikDegisimPct: number_(source, ['AnlikDegisim%', 'AnlıkDeğişim%']),
+      kapanis_T: number_(source, ['Kapanis_T0', 'Kapanış_T0']),
+      fiyatdeg_T: number_(source, ['FiyatDegisim%_T0', 'FiyatDeğişim%_T0']),
+      hacimdeg_T: number_(source, ['HacimDegisim%_T0', 'HacimDeğişim%_T0']),
+      hacimdeg: number_(source, ['HacimDegisim%_T0', 'HacimDeğişim%_T0']),
+      ema20: number_(source, ['EMA20_T0', 'EMA20']),
+      ema50: number_(source, ['EMA50_T0', 'EMA50']),
+      ema200: number_(source, ['EMA200_T0', 'EMA200']),
+      macdhist: number_(source, ['MACDHist_T0', 'MACDHist', 'MACD_Hist_T0', 'MACD_Hist']),
+      rsi14: number_(source, ['RSI14_T0', 'RSI14']),
+      momentum10: number_(source, ['Momentum10_T0', 'Momentum10']),
+      vol5: number_(source, ['Volatilite5G_T0', 'Volatilite5G', 'Volatilite_5G_T0', 'Volatilite_5G']),
+      vol21: number_(source, ['Volatilite21G_T0', 'Volatilite21G', 'Volatilite_21G_T0', 'Volatilite_21G']),
+      vol63: number_(source, ['Volatilite63G_T0', 'Volatilite63G', 'Volatilite_63G_T0', 'Volatilite_63G']),
+      volatilite21g: number_(source, ['Volatilite21G_T0', 'Volatilite21G', 'Volatilite_21G_T0', 'Volatilite_21G']),
+      bollu: number_(source, ['Boll_Ust_T0', 'Boll_Ust', 'Bollinger_Ust_T0', 'Bollinger_Ust']),
+      bolla: number_(source, ['Boll_Alt_T0', 'Boll_Alt', 'Bollinger_Alt_T0', 'Bollinger_Alt']),
+      deg3g_num: seriesNumber_(source, ['Degisim3Gun(%)_T0', 'Degisim3GunNum', 'Değişim3GünNum', 'Degisim3Gun']),
+      getiri1A: number_(source, ['Getiri_TL_1A_T0', 'Getiri_TL_1A']),
+      getiri3A: number_(source, ['Getiri_TL_3A_T0', 'Getiri_TL_3A']),
+      getiri6A: number_(source, ['Getiri_TL_6A_T0', 'Getiri_TL_6A']),
+      history: history_(source, opts.historyDepth || 30),
+      raw: source
     };
 
     return feature;
@@ -188,6 +233,7 @@ var RUNTIME_INPUT_ADAPTER = (function () {
 
   return Object.freeze({
     version: VERSION,
+    normalizeRecordKeys: normalizeRecordKeys_,
     toFeature: toFeature,
     readFeatures: readFeatures,
     buildExpertResults: buildExpertResults,
