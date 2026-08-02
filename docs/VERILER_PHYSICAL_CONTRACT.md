@@ -8,9 +8,9 @@ Bu belge, başlangıç hedefi kapsamında canlı `Veriler` sayfasının gerçek 
 
 | Alan | Satır | Sütun | Son sütun |
 |---|---:|---:|---|
-| Fiziksel grid | 1.458 | 1.731 | BMM |
+| Fiziksel grid | 1.458 | 1.731 | BNO |
 | Fiilen kullanılan veri alanı | 557 | 468 | QZ |
-| Boş kapasite fazlası | 901 | 1.263 | RA:BMM |
+| Boş kapasite fazlası | 901 | 1.263 | RA:BNO |
 
 Canlı okumada:
 
