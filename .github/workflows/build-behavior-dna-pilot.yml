@@ -3,8 +3,7 @@ name: Build Behavior DNA Pilot
 on:
   workflow_dispatch:
   push:
-    branches:
-      - behavior-dna
+    branches: [behavior-dna]
     paths:
       - '.github/workflows/build-behavior-dna-pilot.yml'
       - 'scripts/run_pilot_behavior_dna.py'
@@ -17,12 +16,12 @@ permissions:
 
 concurrency:
   group: behavior-dna-pilot-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       PYTHONUNBUFFERED: '1'
       OMP_NUM_THREADS: '2'
@@ -56,10 +55,10 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-      - name: Build real-data pilot database
+      - name: Build 100-behavior real-data database
         run: python scripts/run_pilot_behavior_dna.py
 
-      - name: Validate required deliverables
+      - name: Validate acceptance criteria
         run: |
           test -s artifacts/behavior_dna/behavior_dna.parquet
           test -s artifacts/behavior_dna/event_study.parquet
@@ -68,16 +67,31 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          report = json.loads(Path('artifacts/behavior_dna/run_report.json').read_text())
-          assert report['stock_count'] == 10, report
+          import openpyxl
+          import pandas as pd
+
+          root = Path('artifacts/behavior_dna')
+          report = json.loads((root / 'run_report.json').read_text())
+          assert report['stock_count'] >= 10, report
+          assert report['market_behavior_count'] >= 100, report
+          assert report['stock_behavior_profile_count'] >= 1000, report
+          assert report['event_count'] > 0, report
           assert report['behavior_rows'] > 0, report
+          profiles = pd.read_parquet(root / 'behavior_dna.parquet')
+          events = pd.read_parquet(root / 'event_study.parquet')
+          assert len(profiles) >= 1000 and profiles['symbol'].nunique() >= 10
+          assert len(events) > 0
+          required = {'README','Market_Behaviors_100','Stock_Universe','Event_Dates','Behavior_DNA','Event_Study','Stock_Summaries','Sector_Summaries','Market_Regimes','Coverage','Missing_Data','Data_Quality','Sources','Methodology','SHA256SUMS'}
+          workbook = openpyxl.load_workbook(root / 'BehaviorDNA.xlsx', read_only=True)
+          assert required.issubset(workbook.sheetnames), required - set(workbook.sheetnames)
+          assert (root / 'BehaviorDNA.xlsx').stat().st_size > 10000
           print(json.dumps(report, indent=2, ensure_ascii=False))
           PY
 
       - name: Upload Behavior DNA deliverables
         uses: actions/upload-artifact@v4
         with:
-          name: BehaviorDNA-pilot-${{ github.run_number }}
+          name: BehaviorDNA-100-behaviors-${{ github.run_number }}
           path: |
             artifacts/behavior_dna/behavior_dna.parquet
             artifacts/behavior_dna/event_study.parquet
@@ -88,8 +102,10 @@ jobs:
             artifacts/behavior_dna/BehaviorDNA.xlsx
             artifacts/behavior_dna/coverage_report.csv
             artifacts/behavior_dna/missing_data_report.csv
+            artifacts/behavior_dna/source_failures.csv
             artifacts/behavior_dna/run_report.json
             artifacts/behavior_dna/SHA256SUMS.json
+            artifacts/behavior_dna/SHA256SUMS.xlsx
           if-no-files-found: error
           retention-days: 30
 
@@ -97,8 +113,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: BehaviorDNA-pilot-failure-${{ github.run_number }}
-          path: |
-            artifacts/behavior_dna/
+          name: BehaviorDNA-failure-${{ github.run_number }}
+          path: artifacts/behavior_dna/
           if-no-files-found: warn
           retention-days: 14
