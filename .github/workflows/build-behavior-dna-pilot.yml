@@ -10,6 +10,14 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-behavior-dna-pilot.yml'
+      - 'scripts/run_pilot_behavior_dna.py'
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
 
 permissions:
   contents: read
