@@ -26,11 +26,16 @@ jobs:
           ROOT="Aurum_BIST_Top20_AppsScript"
           mkdir -p "$ROOT/moduler" "$ROOT/alternatif-tek-dosya"
 
-          mapfile -t GS_FILES < <(find apps-script/src -maxdepth 1 -type f -name '*.gs' | sort)
-          test "${#GS_FILES[@]}" -gt 0
-          printf '%s\n' "${#GS_FILES[@]} production .gs modules packaged" > "$ROOT/MODULE_COUNT.txt"
+          mapfile -t SRC_FILES < <(find apps-script/src -maxdepth 1 -type f -name '*.gs' | sort)
+          mapfile -t TEST_FILES < <(find apps-script/tests -maxdepth 1 -type f -name '*.gs' | sort)
+          test "${#SRC_FILES[@]}" -gt 0
+          test "${#TEST_FILES[@]}" -gt 0
 
-          cp "${GS_FILES[@]}" "$ROOT/moduler/"
+          printf '%s\n' "${#SRC_FILES[@]} production .gs modules" > "$ROOT/MODULE_COUNT.txt"
+          printf '%s\n' "${#TEST_FILES[@]} test .gs modules" >> "$ROOT/MODULE_COUNT.txt"
+
+          cp "${SRC_FILES[@]}" "$ROOT/moduler/"
+          cp "${TEST_FILES[@]}" "$ROOT/moduler/"
 
           cat > "$ROOT/moduler/appsscript.json" <<'JSON'
           {
@@ -41,32 +46,23 @@ jobs:
           }
           JSON
 
-          : > "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
-          for f in "${GS_FILES[@]}"; do
-            printf '\n/* ==========================================================================\n * SOURCE: %s\n * ========================================================================== */\n\n' "$(basename "$f")" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
-            cat "$f" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
-            printf '\n' >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final.gs"
+          : > "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+          for f in "${SRC_FILES[@]}" "${TEST_FILES[@]}"; do
+            printf '\n/* ==========================================================================\n * SOURCE: %s\n * ========================================================================== */\n\n' "$(basename "$f")" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+            cat "$f" >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
+            printf '\n' >> "$ROOT/alternatif-tek-dosya/Aurum_BIST_Top20_Final_With_Tests.gs"
           done
           cp "$ROOT/moduler/appsscript.json" "$ROOT/alternatif-tek-dosya/appsscript.json"
 
           cat > "$ROOT/KURULUM.txt" <<'TXT'
           AURUM BIST TOP 20 - GOOGLE APPS SCRIPT PAKETI
 
-          1) ÖNERİLEN KURULUM: moduler klasöründeki .gs dosyalarını ve appsscript.json dosyasını kullanın.
-          2) alternatif-tek-dosya klasörü yalnız tüm kodu tek .gs dosyasında kullanmak isteyenler içindir.
-          3) Modüler dosyalar ile tek-dosya alternatifini aynı Apps Script projesine birlikte yüklemeyin.
-          4) Legacy V_141225 monolit kodunu bu modüllerle aynı projeye eklemeyin; global fonksiyon çakışması oluşur.
-          5) Google Apps Script arayüzü ZIP'i doğrudan içe aktarmadığından toplu aktarım için clasp kullanılması önerilir:
-
-             npm install -g @google/clasp
-             clasp login
-             clasp clone <SCRIPT_ID>
-
-             Ardından moduler klasöründeki dosyaları clone edilen proje klasörüne kopyalayın ve:
-
-             clasp push
-
-          6) Yükleme sonrasında önce bütünlük ve regresyon testlerini çalıştırın.
+          1) moduler klasörü hem üretim .gs dosyalarını hem de test .gs dosyalarını içerir.
+          2) Mevcut Apps Script projesine bu klasördeki tüm .gs dosyalarını ve appsscript.json dosyasını aktarın.
+          3) alternatif-tek-dosya klasörü yalnız bütün kodu tek .gs dosyasında kullanmak isteyenler içindir.
+          4) Modüler dosyalar ile tek-dosya alternatifini aynı projeye birlikte yüklemeyin.
+          5) Legacy V_141225 monolit kodunu bu modüllerle aynı projeye eklemeyin.
+          6) Toplu aktarım için clasp kullanın ve ardından runAllProjectTests_ çalıştırın.
           7) Üretim kullanımından önce sistem SHADOW-ONLY modunda doğrulanmalıdır.
           TXT
 
@@ -75,12 +71,12 @@ jobs:
             find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
           )
 
-          zip -r Aurum_BIST_Top20_AppsScript_Final.zip "$ROOT"
+          zip -r Aurum_BIST_Top20_AppsScript_With_Tests.zip "$ROOT"
 
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: Aurum_BIST_Top20_AppsScript_Final
-          path: Aurum_BIST_Top20_AppsScript_Final.zip
+          name: Aurum_BIST_Top20_AppsScript_With_Tests
+          path: Aurum_BIST_Top20_AppsScript_With_Tests.zip
           if-no-files-found: error
           retention-days: 30
