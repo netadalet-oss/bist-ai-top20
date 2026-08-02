@@ -12,6 +12,7 @@ on:
       - 'pyproject.toml'
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
     paths:
       - '.github/workflows/build-behavior-dna-pilot.yml'
       - 'scripts/run_pilot_behavior_dna.py'
