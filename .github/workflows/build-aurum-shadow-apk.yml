@@ -3,6 +3,10 @@ name: Build Aurum Shadow APK
 on:
   push:
     branches: ["android/aurum-shadow-app"]
+  pull_request:
+    paths:
+      - "android-app/**"
+      - ".github/workflows/build-aurum-shadow-apk.yml"
   workflow_dispatch:
 
 permissions:
@@ -28,7 +32,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Generate persistent release key artifact
+      - name: Generate release signing key
         run: |
           keytool -genkeypair -v \
             -keystore "$GITHUB_WORKSPACE/android-app/aurum-shadow-release.jks" \
