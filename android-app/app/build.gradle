@@ -2,6 +2,6 @@ plugins { id 'com.android.application' }
 android {
   namespace 'com.aurum.top20next'
   compileSdk 35
-  defaultConfig { applicationId 'com.aurum.top20next'; minSdk 23; targetSdk 35; versionCode 3; versionName '1.1.0' }
+  defaultConfig { applicationId 'com.aurum.top20next'; minSdk 23; targetSdk 35; versionCode 4; versionName '1.2.0' }
   buildTypes { release { minifyEnabled false } }
 }
